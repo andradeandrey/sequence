@@ -26,9 +26,19 @@ func (this Sequence) String() string {
 
 	for _, token := range this {
 		if token.Field != FieldUnknown {
-			p += token.Field.String() + " "
+			if token.Range == 0 || token.Range == 1 {
+				p += token.Field.String() + " "
+			} else {
+				f := token.Field.String()
+				p += fmt.Sprintf("%s-%d%% ", f[:len(f)-1], token.Range)
+			}
 		} else if token.Type != TokenUnknown && token.Type != TokenLiteral {
-			p += token.Type.String() + " "
+			if token.Range == 0 || token.Range == 1 {
+				p += token.Type.String() + " "
+			} else {
+				f := token.Type.String()
+				p += fmt.Sprintf("%s-%d%% ", f[:len(f)-1], token.Range)
+			}
 		} else if token.Type == TokenLiteral {
 			p += token.Value + " "
 		}
@@ -49,15 +59,6 @@ func (this Sequence) Signature() string {
 			sig += token.Value
 		}
 	}
-
-	/*
-		h := fnv.New64a()
-		if _, err := h.Write([]byte(sig)); err != nil {
-			return err
-		}
-
-		hash := h.Sum64()
-	*/
 
 	return sig
 }

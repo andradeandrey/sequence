@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"runtime/pprof"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/dataence/glog"
@@ -61,6 +62,7 @@ var (
 	outfile    string
 	patfile    string
 	cpuprofile string
+	workers    int
 
 	quit chan struct{}
 	done chan struct{}
@@ -88,6 +90,7 @@ func init() {
 	benchCmd.Flags().StringVarP(&infile, "infile", "i", "", "input file, required ")
 	benchCmd.Flags().StringVarP(&patfile, "patfile", "p", "", "initial pattern file, required")
 	benchCmd.Flags().StringVarP(&cpuprofile, "cpuprofile", "c", "", "CPU profile filename")
+	benchCmd.Flags().IntVarP(&workers, "workers", "w", 1, "number of parsing workers")
 	benchCmd.Run = bench
 
 	sequenceCmd.AddCommand(scanCmd)
@@ -182,7 +185,8 @@ func analyze(cmd *cobra.Command, args []string) {
 	iscan, ifile = openFile(infile)
 	defer ifile.Close()
 
-	patmap := make(map[string]map[string]string)
+	pmap := make(map[string]map[string]string)
+	amap := make(map[string]map[string]string)
 	n := 0
 
 	// Now that we have built the analyzer, let's go through each log message again
@@ -203,10 +207,10 @@ func analyze(cmd *cobra.Command, args []string) {
 		if err == nil {
 			pat := pseq.String()
 			sig := pseq.Signature()
-			if _, ok := patmap[pat]; !ok {
-				patmap[pat] = make(map[string]string)
+			if _, ok := pmap[pat]; !ok {
+				pmap[pat] = make(map[string]string)
 			}
-			patmap[pat][sig] = line
+			pmap[pat][sig] = line
 		} else {
 			aseq, err := analyzer.Analyze(seq)
 			if err != nil {
@@ -214,10 +218,10 @@ func analyze(cmd *cobra.Command, args []string) {
 			} else {
 				pat := aseq.String()
 				sig := aseq.Signature()
-				if _, ok := patmap[pat]; !ok {
-					patmap[pat] = make(map[string]string)
+				if _, ok := amap[pat]; !ok {
+					amap[pat] = make(map[string]string)
 				}
-				patmap[pat][sig] = line
+				amap[pat][sig] = line
 			}
 		}
 	}
@@ -225,7 +229,7 @@ func analyze(cmd *cobra.Command, args []string) {
 	ofile := openOutputFile(outfile)
 	defer ofile.Close()
 
-	for pat, lines := range patmap {
+	for pat, lines := range pmap {
 		fmt.Fprintf(ofile, "%s\n", pat)
 		for _, line := range lines {
 			fmt.Fprintf(ofile, "# %s\n", line)
@@ -233,7 +237,15 @@ func analyze(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(ofile)
 	}
 
-	log.Printf("Analyzed %d messages, found %d unique patterns", n, len(patmap))
+	for pat, lines := range amap {
+		fmt.Fprintf(ofile, "%s\n", pat)
+		for _, line := range lines {
+			fmt.Fprintf(ofile, "# %s\n", line)
+		}
+		fmt.Fprintln(ofile)
+	}
+
+	log.Printf("Analyzed %d messages, found %d unique patterns, %d are new.", n, len(pmap)+len(amap), len(amap))
 }
 
 func parse(cmd *cobra.Command, args []string) {
@@ -317,18 +329,41 @@ func bench(cmd *cobra.Command, args []string) {
 
 	s := sequence.NewScanner()
 	now := time.Now()
+	msgpipe := make(chan string, 1000)
+	done2 := make(chan struct{})
+	total := int64(0)
+
+	for i := 0; i < workers; i++ {
+		go func() {
+			for line := range msgpipe {
+				seq, err := s.Scan(line)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				_, err = parser.Parse(seq)
+				if err != nil {
+					log.Printf("Error parsing: %s", line)
+				}
+
+				t2 := atomic.AddInt64(&total, 1)
+				if t2 == int64(n) {
+					close(done2)
+				}
+			}
+		}()
+	}
 
 	for _, line := range lines {
-		seq, err := s.Scan(line)
-		if err != nil {
-			log.Fatal(err)
-		}
+		msgpipe <- line
+	}
 
-		//pseq, err := parser.Parse(seq)
-		_, err = parser.Parse(seq)
-		if err != nil {
-			log.Printf("Error parsing: %s", line)
-		}
+	select {
+	case <-done2:
+		close(msgpipe)
+
+	case <-time.Tick(30 * time.Second):
+		log.Fatal("Timeout waiting for parsing to complete")
 	}
 
 	since := time.Since(now)

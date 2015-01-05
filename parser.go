@@ -18,8 +18,6 @@ import (
 	"fmt"
 	"sync"
 	"unicode"
-
-	"github.com/willf/bitset"
 )
 
 type Parser struct {
@@ -31,20 +29,19 @@ type Parser struct {
 type parseNode struct {
 	Token
 
-	leafNode        bool
-	fixedChildren   []*parseNode
-	fixedSet        *bitset.BitSet
-	literalChildren map[string]*parseNode
+	leaf     bool
+	children map[string]*parseNode
 }
 
 type stackParseNode struct {
 	node  *parseNode
-	level int
-	score int
+	level int // current level of the node
+	score int // the score of the path traversed
+	next  int // the next token of the sequence to consume
 }
 
-func (this *stackParseNode) String() string {
-	return fmt.Sprintf("level=%d, score=%d, %s", this.level, this.score, this.node)
+func (this stackParseNode) String() string {
+	return fmt.Sprintf("level=%d, score=%d, next=%d, %s", this.level, this.score, this.next, this.node)
 }
 
 func NewParser() *Parser {
@@ -56,61 +53,49 @@ func NewParser() *Parser {
 
 func newParseNode() *parseNode {
 	return &parseNode{
-		leafNode:        false,
-		fixedChildren:   make([]*parseNode, numAllTypes),
-		fixedSet:        bitset.New(uint(numAllTypes)),
-		literalChildren: make(map[string]*parseNode),
+		children: make(map[string]*parseNode),
 	}
 }
 
 func (this *parseNode) String() string {
-	return fmt.Sprintf("leaf=%t, node=%s", this.leafNode, this.Token.String())
+	return fmt.Sprintf("leaf=%t, node=%s, children=%d", this.leaf, this.Token.String(), len(this.children))
 }
 
 func (this *Parser) Add(seq Sequence) error {
 	this.mu.Lock()
 	defer this.mu.Unlock()
 
-	found := (*parseNode)(nil)
 	cur := this.root
-	var ok bool
 
 	for _, token := range seq {
-		if token.Field != FieldUnknown {
-			found = cur.fixedChildren[token.Field]
-			if found == nil {
-				found = newParseNode()
-				found.Token = token
-				cur.fixedChildren[token.Field] = found
-				cur.fixedSet.Set(uint(token.Field))
-			}
-		} else if token.Type != TokenUnknown && token.Type != TokenLiteral {
-			found = cur.fixedChildren[numFieldTypes+int(token.Type)]
-			if found == nil {
-				found = newParseNode()
-				found.Token = token
-				cur.fixedChildren[numFieldTypes+int(token.Type)] = found
-				cur.fixedSet.Set(uint(numFieldTypes) + uint(token.Type))
-			}
-		} else if token.Type == TokenLiteral {
-			found, ok = cur.literalChildren[token.Value]
-			if !ok {
-				found = newParseNode()
-				found.Token = token
-				cur.literalChildren[token.Value] = found
-			}
+		var key string
+
+		switch {
+		case token.Field != FieldUnknown:
+			key = token.Field.String()
+
+		case token.Type != TokenUnknown && token.Type != TokenLiteral:
+			key = token.Type.String()
+
+		case token.Type == TokenLiteral:
+			key = token.Value
 		}
 
-		//glog.Debugf("found=%s", found.String())
+		found, ok := cur.children[key]
+		if !ok {
+			found = newParseNode()
+			found.Token = token
+			cur.children[key] = found
+		}
 
 		cur = found
 	}
 
-	cur.leafNode = true
+	cur.leaf = true
 
 	//fmt.Printf("parser.go/AddPattern(): count = %d, height = %d\n", msg.Count(), this.height)
-	if len(seq) > this.height {
-		this.height = len(seq)
+	if len(seq)+1 > this.height {
+		this.height = len(seq) + 1
 	}
 
 	return nil
@@ -125,7 +110,7 @@ func (this *Parser) Parse(seq Sequence) (Sequence, error) {
 		return nil, err
 	}
 
-	var seq2 Sequence
+	seq2 := make(Sequence, 0, len(path))
 
 	for i, n := range path {
 		n.Token.Value, n.Token.IsKey, n.Token.IsValue = seq[i].Value, seq[i].IsKey, seq[i].IsValue
@@ -135,48 +120,81 @@ func (this *Parser) Parse(seq Sequence) (Sequence, error) {
 	return seq2, nil
 }
 
-func (this *Parser) parseMessage(seq Sequence) ([]*parseNode, error) {
+func (this *Parser) parseMessage(seq Sequence) ([]parseNode, error) {
 	var (
 		cur stackParseNode
 
 		// Keep track of the path we have walked
-		path []*parseNode = make([]*parseNode, len(seq)+1)
+		path []parseNode = make([]parseNode, len(seq)+1)
 
 		// Keeps track of ALL paths of the matched patterns
-		paths [][]*parseNode
+		paths [][]parseNode
 
 		bestScore int
 		bestPath  int
 	)
 
-	// toVisit is a stack, nodes that need to be visited are appended to the end,
-	// and we take nodes from the end to visit
-	toVisit := append(make([]stackParseNode, 0, 100), stackParseNode{this.root, 0, 0})
+	if len(seq) == 0 {
+		return nil, ErrNoMatch
+	}
+
+	//glog.Debugf("%s", seq.LongString())
+	// toVisit is a stack, children that need to be visited are appended to the end,
+	// and we take children from the end to visit
+	toVisit := make([]stackParseNode, 0, 10)
+	this.addNodesToVisit(&toVisit, stackParseNode{node: this.root}, seq[0])
 
 	for len(toVisit) > 0 {
-		cur = toVisit[len(toVisit)-1]
+		// pop the last element from the toVisit stack
+		toVisit, cur = toVisit[:len(toVisit)-1], toVisit[len(toVisit)-1]
+
 		//glog.Debugf("cur=%s", cur.String())
 
-		toVisit = toVisit[:len(toVisit)-1]
+		var token Token
+		var next int
 
-		if cur.level <= len(path) {
-			// If we are here, then the current level is less than the number of tokens,
-			// then we can assume this is still a possible path. So let's track it.
-			path[cur.level] = cur.node
+		if cur.node.Token.Range == 0 || cur.node.Token.Range == 1 {
+			token = seq[cur.next]
+			token.Range = 1
+			next = cur.next + 1
+		} else {
+			token.Field = cur.node.Token.Field
+			token.Type = TokenString
+			token.Range = 0
+
+			for next = cur.next; next < len(seq) && next < cur.next+cur.node.Token.Range; next++ {
+				token.Value += " " + seq[next].Value
+				token.Range++
+			}
 		}
 
-		// If the current level we are visiting is greater or equal to the number of
-		// tokens in the message, that means we have exhausted the message length. If
-		// the current node is also a leaf node, it means we have matched a pattern,
-		// so let's calculate the scores and max depth of this path, save the depth,
-		// score and path, and then move on to the next possible path.
-		if cur.level >= len(seq) {
-			// If this is a leaf node, that means we are at the end of the tree, and
-			// since this is also the last token, it means we have a match. If it's
-			// not a leaf node, it means we do not have a match.
-			if cur.node.leafNode {
-				tmppath := append(make([]*parseNode, 0, len(path)-1), path[1:]...)
-				paths = append(paths, tmppath)
+		//glog.Debugf("token=%s", token)
+
+		switch {
+		case cur.node.Type == token.Type && token.Type != TokenLiteral:
+			cur.score += fullMatchWeight
+
+		case cur.node.Type == TokenString && token.Type == TokenLiteral &&
+			(len(token.Value) != 1 || (len(token.Value) == 1 && unicode.IsLetter(rune(token.Value[0])))):
+			cur.score += partialMatchWeight
+
+		case token.Type == TokenLiteral && token.Value == cur.node.Value:
+			cur.score += fullMatchWeight
+
+		default:
+			continue
+		}
+
+		path[cur.level].Token = cur.node.Token
+		path[cur.level].Token.Value = token.Value
+		path[cur.level].Token.Range = cur.node.Range
+		cur.next = next
+
+		if next >= len(seq) {
+			if cur.node.leaf {
+				//glog.Debugf("Found path")
+				newpath := append(make([]parseNode, 0, cur.level+1), path[1:cur.level+1]...)
+				paths = append(paths, newpath)
 
 				if cur.score > bestScore {
 					bestScore = cur.score
@@ -187,32 +205,8 @@ func (this *Parser) parseMessage(seq Sequence) ([]*parseNode, error) {
 			continue
 		}
 
-		token := seq[cur.level]
-
-		//glog.Debugf("token=%q", token)
-
-		for i, e := cur.node.fixedSet.NextSet(0); e; i, e = cur.node.fixedSet.NextSet(i + 1) {
-			node := cur.node.fixedChildren[i]
-			if node != nil {
-				switch {
-				case node.Type == token.Type:
-					toVisit = append(toVisit, stackParseNode{node, cur.level + 1, cur.score + fullMatchWeight})
-
-				case node.Type == TokenString && token.Type == TokenLiteral &&
-					(len(token.Value) != 1 || (len(token.Value) == 1 && unicode.IsLetter(rune(token.Value[0])))):
-					toVisit = append(toVisit, stackParseNode{node, cur.level + 1, cur.score + partialMatchWeight})
-				}
-			}
-		}
-
-		if token.Type == TokenLiteral {
-			//glog.Debugf("%v", cur.node.literalChildren)
-			//glog.Debugf("%q", token.Value)
-			if node, ok := cur.node.literalChildren[token.Value]; ok {
-				//glog.Debugf("found literal ok")
-				toVisit = append(toVisit, stackParseNode{node, cur.level + 1, cur.score + 2})
-			}
-		}
+		//toVisit = append(toVisit, this.nodesToVisit(cur, seq[next])...)
+		this.addNodesToVisit(&toVisit, cur, seq[next])
 	}
 
 	if len(paths) > bestPath {
@@ -222,29 +216,14 @@ func (this *Parser) parseMessage(seq Sequence) ([]*parseNode, error) {
 	return nil, ErrNoMatch
 }
 
-func (this *Parser) dump() {
-	toVisit := append(make([]*stackParseNode, 0, 100), &stackParseNode{this.root, -1, 0})
+func (this *Parser) addNodesToVisit(toVisit *[]stackParseNode, cur stackParseNode, next Token) {
+	for _, node := range cur.node.children {
+		if (node.Type == next.Type && next.Type != TokenLiteral) ||
+			(node.Type == TokenString && next.Type == TokenLiteral) ||
+			(next.Type == TokenLiteral && node.Value == next.Value) {
 
-	for len(toVisit) > 0 {
-		cur := toVisit[len(toVisit)-1]
-		toVisit = toVisit[:len(toVisit)-1]
-
-		for _, node := range cur.node.fixedChildren {
-			if node == nil {
-				continue
-			}
-
-			toVisit = append(toVisit, &stackParseNode{node, cur.level + 1, 0})
+			//glog.Debugf("Adding: %s", node)
+			*toVisit = append(*toVisit, stackParseNode{node, cur.level + 1, cur.score, cur.next})
 		}
-
-		for _, node := range cur.node.literalChildren {
-			toVisit = append(toVisit, &stackParseNode{node, cur.level + 1, 0})
-		}
-
-		for i := 0; i < cur.level+1; i++ {
-			fmt.Printf("__")
-		}
-
-		fmt.Println(cur.node)
 	}
 }

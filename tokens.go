@@ -23,6 +23,8 @@ type Token struct {
 
 	IsKey   bool
 	IsValue bool
+
+	Range int
 }
 
 func (this Token) String() string {
@@ -30,6 +32,7 @@ func (this Token) String() string {
 }
 
 type (
+	// Semantic
 	FieldType int
 	TokenType int
 )
@@ -370,53 +373,156 @@ func field2TokenType(s string) TokenType {
 }
 
 var fieldTokenMap map[string]*Token = map[string]*Token{
-	"%funknown%":   &Token{TokenUnknown, FieldUnknown, "%funknown%", false, false},
-	"%msgtype%":    &Token{TokenInteger, FieldMsgType, "%msgtype%", false, false},
-	"%msgclass%":   &Token{TokenString, FieldMsgClass, "%msgclass%", false, false},
-	"%recvtime%":   &Token{TokenTS, FieldRecvTime, "%recvtime%", false, false},
-	"%createtime%": &Token{TokenTS, FieldCreateTime, "%createtime%", false, false},
-	"%severity%":   &Token{TokenInteger, FieldSeverity, "%severity%", false, false},
-	"%priority%":   &Token{TokenInteger, FieldPriority, "%priority%", false, false},
-	"%apphost%":    &Token{TokenString, FieldAppHost, "%apphost%", false, false},
-	"%appipv4%":    &Token{TokenIPv4, FieldAppIPv4, "%appipv4%", false, false},
-	"%appname%":    &Token{TokenString, FieldAppName, "%appname%", false, false},
-	"%apptype%":    &Token{TokenString, FieldAppType, "%apptype%", false, false},
-	"%srcdomain%":  &Token{TokenString, FieldSrcDomain, "%srcdomain%", false, false},
-	"%srczone%":    &Token{TokenString, FieldSrcZone, "%srczone%", false, false},
-	"%srchost%":    &Token{TokenString, FieldSrcHost, "%srchost%", false, false},
-	"%srcipv4%":    &Token{TokenIPv4, FieldSrcIPv4, "%srcipv4%", false, false},
-	"%srcipv4nat%": &Token{TokenIPv4, FieldSrcIPv4NAT, "%srcipv4nat%", false, false},
-	"%srcipv6%":    &Token{TokenIPv6, FieldSrcIPv6, "%srcipv6%", false, false},
-	"%srcport%":    &Token{TokenInteger, FieldSrcPort, "%srcport%", false, false},
-	"%srcportnat%": &Token{TokenInteger, FieldSrcPortNAT, "%srcportnat%", false, false},
-	"%srcmac%":     &Token{TokenMac, FieldSrcMac, "%srcmac%", false, false},
-	"%srcuser%":    &Token{TokenString, FieldSrcUser, "%srcuser%", false, false},
-	"%srcemail%":   &Token{TokenString, FieldSrcEmail, "%srcemail%", false, false},
-	"%dstdomain%":  &Token{TokenString, FieldDstDomain, "%dstdomain%", false, false},
-	"%dstzone%":    &Token{TokenString, FieldDstZone, "%dstzone%", false, false},
-	"%dsthost%":    &Token{TokenString, FieldDstHost, "%dsthost%", false, false},
-	"%dstipv4%":    &Token{TokenIPv4, FieldDstIPv4, "%dstipv4%", false, false},
-	"%dstipv4nat%": &Token{TokenIPv4, FieldDstIPv4NAT, "%dstipv4nat%", false, false},
-	"%dstipv6%":    &Token{TokenIPv6, FieldDstIPv6, "%dstipv6%", false, false},
-	"%dstport%":    &Token{TokenInteger, FieldDstPort, "%dstport%", false, false},
-	"%dstportnat%": &Token{TokenInteger, FieldDstPortNAT, "%dstportnat%", false, false},
-	"%dstmac%":     &Token{TokenMac, FieldDstMac, "%dstmac%", false, false},
-	"%dstuser%":    &Token{TokenString, FieldDstUser, "%dstuser%", false, false},
-	"%dstemail%":   &Token{TokenString, FieldDstEmail, "%dstemail%", false, false},
-	"%protocol%":   &Token{TokenString, FieldProtocol, "%protocol%", false, false},
-	"%iniface%":    &Token{TokenString, FieldInIface, "%iniface%", false, false},
-	"%outiface%":   &Token{TokenString, FieldOutIface, "%outiface%", false, false},
-	"%policyid%":   &Token{TokenInteger, FieldPolicyID, "%policyid%", false, false},
-	"%sessionid%":  &Token{TokenInteger, FieldSessionID, "%sessionid%", false, false},
-	"%object%":     &Token{TokenString, FieldObject, "%object%", false, false},
-	"%action%":     &Token{TokenString, FieldAction, "%action%", false, false},
-	"%method%":     &Token{TokenString, FieldMethod, "%method%", false, false},
-	"%methodtype%": &Token{TokenString, FieldMethodType, "%methodtype%", false, false},
-	"%status%":     &Token{TokenString, FieldStatus, "%status%", false, false},
-	"%reason%":     &Token{TokenString, FieldReason, "%reason%", false, false},
-	"%bytesrecv%":  &Token{TokenInteger, FieldBytesRecv, "%bytesrecv%", false, false},
-	"%bytessent%":  &Token{TokenInteger, FieldBytesSent, "%bytessent%", false, false},
-	"%pktsrecv%":   &Token{TokenInteger, FieldPktsRecv, "%pktsrecv%", false, false},
-	"%pktssent%":   &Token{TokenInteger, FieldPktsSent, "%pktssent%", false, false},
-	"%duration%":   &Token{TokenString, FieldDuration, "%duration%", false, false},
+	"%funknown%":   &Token{TokenUnknown, FieldUnknown, "%funknown%", false, false, 0},
+	"%msgtype%":    &Token{TokenInteger, FieldMsgType, "%msgtype%", false, false, 0},
+	"%msgclass%":   &Token{TokenString, FieldMsgClass, "%msgclass%", false, false, 0},
+	"%recvtime%":   &Token{TokenTS, FieldRecvTime, "%recvtime%", false, false, 0},
+	"%createtime%": &Token{TokenTS, FieldCreateTime, "%createtime%", false, false, 0},
+	"%severity%":   &Token{TokenInteger, FieldSeverity, "%severity%", false, false, 0},
+	"%priority%":   &Token{TokenInteger, FieldPriority, "%priority%", false, false, 0},
+	"%apphost%":    &Token{TokenString, FieldAppHost, "%apphost%", false, false, 0},
+	"%appipv4%":    &Token{TokenIPv4, FieldAppIPv4, "%appipv4%", false, false, 0},
+	"%appname%":    &Token{TokenString, FieldAppName, "%appname%", false, false, 0},
+	"%apptype%":    &Token{TokenString, FieldAppType, "%apptype%", false, false, 0},
+	"%srcdomain%":  &Token{TokenString, FieldSrcDomain, "%srcdomain%", false, false, 0},
+	"%srczone%":    &Token{TokenString, FieldSrcZone, "%srczone%", false, false, 0},
+	"%srchost%":    &Token{TokenString, FieldSrcHost, "%srchost%", false, false, 0},
+	"%srcipv4%":    &Token{TokenIPv4, FieldSrcIPv4, "%srcipv4%", false, false, 0},
+	"%srcipv4nat%": &Token{TokenIPv4, FieldSrcIPv4NAT, "%srcipv4nat%", false, false, 0},
+	"%srcipv6%":    &Token{TokenIPv6, FieldSrcIPv6, "%srcipv6%", false, false, 0},
+	"%srcport%":    &Token{TokenInteger, FieldSrcPort, "%srcport%", false, false, 0},
+	"%srcportnat%": &Token{TokenInteger, FieldSrcPortNAT, "%srcportnat%", false, false, 0},
+	"%srcmac%":     &Token{TokenMac, FieldSrcMac, "%srcmac%", false, false, 0},
+	"%srcuser%":    &Token{TokenString, FieldSrcUser, "%srcuser%", false, false, 0},
+	"%srcemail%":   &Token{TokenString, FieldSrcEmail, "%srcemail%", false, false, 0},
+	"%dstdomain%":  &Token{TokenString, FieldDstDomain, "%dstdomain%", false, false, 0},
+	"%dstzone%":    &Token{TokenString, FieldDstZone, "%dstzone%", false, false, 0},
+	"%dsthost%":    &Token{TokenString, FieldDstHost, "%dsthost%", false, false, 0},
+	"%dstipv4%":    &Token{TokenIPv4, FieldDstIPv4, "%dstipv4%", false, false, 0},
+	"%dstipv4nat%": &Token{TokenIPv4, FieldDstIPv4NAT, "%dstipv4nat%", false, false, 0},
+	"%dstipv6%":    &Token{TokenIPv6, FieldDstIPv6, "%dstipv6%", false, false, 0},
+	"%dstport%":    &Token{TokenInteger, FieldDstPort, "%dstport%", false, false, 0},
+	"%dstportnat%": &Token{TokenInteger, FieldDstPortNAT, "%dstportnat%", false, false, 0},
+	"%dstmac%":     &Token{TokenMac, FieldDstMac, "%dstmac%", false, false, 0},
+	"%dstuser%":    &Token{TokenString, FieldDstUser, "%dstuser%", false, false, 0},
+	"%dstemail%":   &Token{TokenString, FieldDstEmail, "%dstemail%", false, false, 0},
+	"%protocol%":   &Token{TokenString, FieldProtocol, "%protocol%", false, false, 0},
+	"%iniface%":    &Token{TokenString, FieldInIface, "%iniface%", false, false, 0},
+	"%outiface%":   &Token{TokenString, FieldOutIface, "%outiface%", false, false, 0},
+	"%policyid%":   &Token{TokenInteger, FieldPolicyID, "%policyid%", false, false, 0},
+	"%sessionid%":  &Token{TokenInteger, FieldSessionID, "%sessionid%", false, false, 0},
+	"%object%":     &Token{TokenString, FieldObject, "%object%", false, false, 0},
+	"%action%":     &Token{TokenString, FieldAction, "%action%", false, false, 0},
+	"%method%":     &Token{TokenString, FieldMethod, "%method%", false, false, 0},
+	"%methodtype%": &Token{TokenString, FieldMethodType, "%methodtype%", false, false, 0},
+	"%status%":     &Token{TokenString, FieldStatus, "%status%", false, false, 0},
+	"%reason%":     &Token{TokenString, FieldReason, "%reason%", false, false, 0},
+	"%bytesrecv%":  &Token{TokenInteger, FieldBytesRecv, "%bytesrecv%", false, false, 0},
+	"%bytessent%":  &Token{TokenInteger, FieldBytesSent, "%bytessent%", false, false, 0},
+	"%pktsrecv%":   &Token{TokenInteger, FieldPktsRecv, "%pktsrecv%", false, false, 0},
+	"%pktssent%":   &Token{TokenInteger, FieldPktsSent, "%pktssent%", false, false, 0},
+	"%duration%":   &Token{TokenString, FieldDuration, "%duration%", false, false, 0},
+}
+
+func field2Token(f string) Token {
+	switch f {
+	case "%msgtype%":
+		return Token{TokenInteger, FieldMsgType, "%msgtype%", false, false, 0}
+	case "%msgclass%":
+		return Token{TokenString, FieldMsgClass, "%msgclass%", false, false, 0}
+	case "%recvtime%":
+		return Token{TokenTS, FieldRecvTime, "%recvtime%", false, false, 0}
+	case "%createtime%":
+		return Token{TokenTS, FieldCreateTime, "%createtime%", false, false, 0}
+	case "%severity%":
+		return Token{TokenInteger, FieldSeverity, "%severity%", false, false, 0}
+	case "%priority%":
+		return Token{TokenInteger, FieldPriority, "%priority%", false, false, 0}
+	case "%apphost%":
+		return Token{TokenString, FieldAppHost, "%apphost%", false, false, 0}
+	case "%appipv4%":
+		return Token{TokenIPv4, FieldAppIPv4, "%appipv4%", false, false, 0}
+	case "%appname%":
+		return Token{TokenString, FieldAppName, "%appname%", false, false, 0}
+	case "%apptype%":
+		return Token{TokenString, FieldAppType, "%apptype%", false, false, 0}
+	case "%srcdomain%":
+		return Token{TokenString, FieldSrcDomain, "%srcdomain%", false, false, 0}
+	case "%srczone%":
+		return Token{TokenString, FieldSrcZone, "%srczone%", false, false, 0}
+	case "%srchost%":
+		return Token{TokenString, FieldSrcHost, "%srchost%", false, false, 0}
+	case "%srcipv4%":
+		return Token{TokenIPv4, FieldSrcIPv4, "%srcipv4%", false, false, 0}
+	case "%srcipv4nat%":
+		return Token{TokenIPv4, FieldSrcIPv4NAT, "%srcipv4nat%", false, false, 0}
+	case "%srcipv6%":
+		return Token{TokenIPv6, FieldSrcIPv6, "%srcipv6%", false, false, 0}
+	case "%srcport%":
+		return Token{TokenInteger, FieldSrcPort, "%srcport%", false, false, 0}
+	case "%srcportnat%":
+		return Token{TokenInteger, FieldSrcPortNAT, "%srcportnat%", false, false, 0}
+	case "%srcmac%":
+		return Token{TokenMac, FieldSrcMac, "%srcmac%", false, false, 0}
+	case "%srcuser%":
+		return Token{TokenString, FieldSrcUser, "%srcuser%", false, false, 0}
+	case "%srcemail%":
+		return Token{TokenString, FieldSrcEmail, "%srcemail%", false, false, 0}
+	case "%dstdomain%":
+		return Token{TokenString, FieldDstDomain, "%dstdomain%", false, false, 0}
+	case "%dstzone%":
+		return Token{TokenString, FieldDstZone, "%dstzone%", false, false, 0}
+	case "%dsthost%":
+		return Token{TokenString, FieldDstHost, "%dsthost%", false, false, 0}
+	case "%dstipv4%":
+		return Token{TokenIPv4, FieldDstIPv4, "%dstipv4%", false, false, 0}
+	case "%dstipv4nat%":
+		return Token{TokenIPv4, FieldDstIPv4NAT, "%dstipv4nat%", false, false, 0}
+	case "%dstipv6%":
+		return Token{TokenIPv6, FieldDstIPv6, "%dstipv6%", false, false, 0}
+	case "%dstport%":
+		return Token{TokenInteger, FieldDstPort, "%dstport%", false, false, 0}
+	case "%dstportnat%":
+		return Token{TokenInteger, FieldDstPortNAT, "%dstportnat%", false, false, 0}
+	case "%dstmac%":
+		return Token{TokenMac, FieldDstMac, "%dstmac%", false, false, 0}
+	case "%dstuser%":
+		return Token{TokenString, FieldDstUser, "%dstuser%", false, false, 0}
+	case "%dstemail%":
+		return Token{TokenString, FieldDstEmail, "%dstemail%", false, false, 0}
+	case "%protocol%":
+		return Token{TokenString, FieldProtocol, "%protocol%", false, false, 0}
+	case "%iniface%":
+		return Token{TokenString, FieldInIface, "%iniface%", false, false, 0}
+	case "%outiface%":
+		return Token{TokenString, FieldOutIface, "%outiface%", false, false, 0}
+	case "%policyid%":
+		return Token{TokenInteger, FieldPolicyID, "%policyid%", false, false, 0}
+	case "%sessionid%":
+		return Token{TokenInteger, FieldSessionID, "%sessionid%", false, false, 0}
+	case "%object%":
+		return Token{TokenString, FieldObject, "%object%", false, false, 0}
+	case "%action%":
+		return Token{TokenString, FieldAction, "%action%", false, false, 0}
+	case "%method%":
+		return Token{TokenString, FieldMethod, "%method%", false, false, 0}
+	case "%methodtype%":
+		return Token{TokenString, FieldMethodType, "%methodtype%", false, false, 0}
+	case "%status%":
+		return Token{TokenString, FieldStatus, "%status%", false, false, 0}
+	case "%reason%":
+		return Token{TokenString, FieldReason, "%reason%", false, false, 0}
+	case "%bytesrecv%":
+		return Token{TokenInteger, FieldBytesRecv, "%bytesrecv%", false, false, 0}
+	case "%bytessent%":
+		return Token{TokenInteger, FieldBytesSent, "%bytessent%", false, false, 0}
+	case "%pktsrecv%":
+		return Token{TokenInteger, FieldPktsRecv, "%pktsrecv%", false, false, 0}
+	case "%pktssent%":
+		return Token{TokenInteger, FieldPktsSent, "%pktssent%", false, false, 0}
+	case "%duration%":
+		return Token{TokenString, FieldDuration, "%duration%", false, false, 0}
+	}
+
+	return Token{TokenUnknown, FieldUnknown, "%funknown%", false, false, 0}
 }

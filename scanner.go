@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -27,6 +28,7 @@ var (
 	ErrAdvanceTooFar   = errors.New("sequence: advance count beyond input")
 	ErrUnknownToken    = errors.New("sequence: unknown token encountered")
 	ErrNoMatch         = errors.New("sequence: no pattern matched for this message")
+	ErrInvalidCount    = errors.New("sequence: invalid count for field token")
 )
 
 type Scanner struct {
@@ -146,12 +148,27 @@ func (this *message) scan() error {
 			this.state.angle = false
 
 		case v[0] == '%' && v[len(v)-1] == '%':
-			// this is a known TokenType or FieldType
+			var err error
+			r := int64(0)
+			parts := strings.Split(v[:len(v)-1], "-")
+
+			if len(parts) > 1 {
+				r, err = strconv.ParseInt(parts[1], 0, 0)
+				if err != nil {
+					return ErrInvalidCount
+				}
+
+				v = parts[0] + "%"
+			}
+
+			token.Range = int(r)
+
+			// is this a known TokenType or FieldType?
 			isTypeToken := false
 
-			if f, ok := fieldTokenMap[v]; ok {
-				token.Field = f.Field
-				token.Type = f.Type
+			if f2 := field2Token(v); f2.Field != FieldUnknown {
+				token.Field = f2.Field
+				token.Type = f2.Type
 				isTypeToken = true
 			} else if t2 := name2TokenType(v); t2 != TokenUnknown {
 				token.Type = t2
@@ -330,7 +347,7 @@ func (this *message) tokenStep(index int, r rune) {
 		this.state.tokenType = TokenURL
 
 	case (r >= 'a' && r <= 'z') || r == '-' || r == '_' || r == '/' || r == '\\' || r == '%' || r == '*' || r == '@' || r == '$' || (r >= 'a' && r <= 'Z'):
-		if r == '/' || r == ':' {
+		if r == '/' {
 			if this.state.tokenType == TokenIPv4 {
 				this.state.tokenStop = true
 			} else if this.state.prevToken.Type == TokenIPv4 {
