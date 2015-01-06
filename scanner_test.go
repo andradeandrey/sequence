@@ -23,19 +23,19 @@ import (
 
 var (
 	testdata map[string]string = map[string]string{
-		"jan 12 06:49:41 irc sshd[7034]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=218-161-81-238.hinet-ip.hinet.net  user=root":                                                                                                                                  "%ts%[%integer%]:(:):;==%integer%=%integer%====",
-		"jan 12 06:49:42 irc sshd[7034]: failed password for root from 218.161.81.238 port 4228 ssh2":                                                                                                                                                                                                           "%ts%[%integer%]:%ipv4%%integer%",
-		"9.26.157.45 - - [16/jan/2003:21:22:59 -0500] \"get /wssamples/ http/1.1\" 200 1576":                                                                                                                                                                                                                    "%ipv4%--[%ts%]\"\"%integer%%integer%",
-		"209.36.88.3 - - [03/may/2004:01:19:07 +0000] \"get http://npkclzicp.xihudohtd.ngm.au/abramson/eiyscmeqix.ac;jsessionid=b0l0v000u0?sid=00000000&sy=afr&kw=goldman&pb=fin&dt=selectrange&dr=0month&so=relevance&st=nw&ss=afr&sf=article&rc=00&clspage=0&docid=fin0000000r0jl000d00 http/1.0\" 200 27981": "%ipv4%--[%ts%]\"%url%\"%integer%%integer%",
-		"4/5/2012 17:55,172.23.1.101,1101,172.23.0.10,139, generic protocol command decode,3, [1:2100538:17] gpl netbios smb ipc$ unicode share access ,tcp ttl:128 tos:0x0 id:1643 iplen:20 dgmlen:122 df,***ap*** seq: 0xcef93f32  ack: 0xc40c0bb  n: 0xfc9c  tcplen: 20,":                                    "%ts%,%ipv4%,%integer%,%ipv4%,%integer%,,%integer%,[%integer%:%integer%:%integer%],:%integer%::%integer%:%integer%:%integer%,::n::%integer%,",
-		"2012-04-05 17:54:47     local4.info     172.23.0.1      %asa-6-302015: built outbound udp connection 1315679 for outside:193.0.14.129/53 (193.0.14.129/53) to inside:172.23.0.10/64048 (10.32.0.1/52130)":                                                                                              "%ts%%ipv4%:%integer%:%ipv4%/%integer%(%ipv4%/%integer%):%ipv4%/%integer%(%ipv4%/%integer%)",
-		"may  2 19:00:02 dlfssrv sendmail[18980]: taa18980: from user daemon: size is 596, class is 0, priority is 30596, and nrcpts=1, message id is <200305021400.taa18980@dlfssrv.in.ibm.com>, relay=daemon@localhost":                                                                                       "%ts%[%integer%]:::%integer%,%integer%,%integer%,=%integer%,<>,=",
-		"jan 12 06:49:56 irc last message repeated 6 times":                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  "%ts%%integer%",
-		"9.26.157.44 - - [16/jan/2003:21:22:59 -0500] \"get http://wssamples http/1.1\" 301 315":                                                                                                                                                                                                                                                                                                                                                                                                                                             "%ipv4%--[%ts%]\"%url%\"%integer%%integer%",
-		"2012-04-05 17:51:26     local4.info     172.23.0.1      %asa-6-302016: teardown udp connection 1315632 for inside:172.23.0.2/514 to identity:172.23.0.1/514 duration 0:09:23 bytes 7999":                                                                                                                                                                                                                                                                                                                                            "%ts%%ipv4%:%integer%:%ipv4%/%integer%:%ipv4%/%integer%%integer%:%integer%:%integer%%integer%",
-		"id=firewall time=\"2005-03-18 14:01:43\" fw=topsec priv=4 recorder=kernel type=conn policy=504 proto=tcp rule=deny src=210.82.121.91 sport=4958 dst=61.229.37.85 dport=23124 smac=00:0b:5f:b2:1d:80 dmac=00:04:c1:8b:d8:82":                                                                                                                                                                                                                                                                                                         "==\"%ts%\"==%integer%===%integer%===%ipv4%=%integer%=%ipv4%=%integer%=%mac%=%mac%",
-		"mar 01 09:42:03.875 pffbisvr smtp[2424]: 334 warning: denied access to command 'ehlo vishwakstg1.msn.vishwak.net' from [209.235.210.30]":                                                                                                                                                                                                                                                                                                                                                                                            "%ts%[%integer%]:%integer%:''[%ipv4%]",
-		"mar 01 09:45:02.596 pffbisvr smtp[2424]: 121 statistics: duration=181.14 user=<egreetings@vishwak.com> id=zduqd sent=1440 rcvd=356 srcif=d45f49a2-b30 src=209.235.210.30/61663 cldst=192.216.179.206/25 svsrc=172.17.74.195/8423 dstif=fd3c875c-064 dst=172.17.74.52/25 op=\"to 1 recips\" arg=<vishwakstg1ojte15fo000033b4@vishwakstg1.msn.vishwak.net> result=\"250 m2004030109385301402 message accepted for delivery\" proto=smtp rule=131 (denied access to command 'ehlo vishwakstg1.msn.vishwak.net' from [209.235.210.30])": "%ts%[%integer%]:%integer%:=%float%=<>==%integer%=%integer%==%ipv4%/%integer%=%ipv4%/%integer%=%ipv4%/%integer%==%ipv4%/%integer%=\"%integer%\"=<>=\"%integer%\"==%integer%(''[%ipv4%])",
+		"jan 12 06:49:41 irc sshd[7034]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=218-161-81-238.hinet-ip.hinet.net  user=root":                                                                                                                                  "%time%[%integer%]:(:):;==%integer%=%integer%====",
+		"jan 12 06:49:42 irc sshd[7034]: failed password for root from 218.161.81.238 port 4228 ssh2":                                                                                                                                                                                                           "%time%[%integer%]:%ipv4%%integer%",
+		"9.26.157.45 - - [16/jan/2003:21:22:59 -0500] \"get /wssamples/ http/1.1\" 200 1576":                                                                                                                                                                                                                    "%ipv4%--[%time%]\"\"%integer%%integer%",
+		"209.36.88.3 - - [03/may/2004:01:19:07 +0000] \"get http://npkclzicp.xihudohtd.ngm.au/abramson/eiyscmeqix.ac;jsessionid=b0l0v000u0?sid=00000000&sy=afr&kw=goldman&pb=fin&dt=selectrange&dr=0month&so=relevance&st=nw&ss=afr&sf=article&rc=00&clspage=0&docid=fin0000000r0jl000d00 http/1.0\" 200 27981": "%ipv4%--[%time%]\"%url%\"%integer%%integer%",
+		"4/5/2012 17:55,172.23.1.101,1101,172.23.0.10,139, generic protocol command decode,3, [1:2100538:17] gpl netbios smb ipc$ unicode share access ,tcp ttl:128 tos:0x0 id:1643 iplen:20 dgmlen:122 df,***ap*** seq: 0xcef93f32  ack: 0xc40c0bb  n: 0xfc9c  tcplen: 20,":                                    "%time%,%ipv4%,%integer%,%ipv4%,%integer%,,%integer%,[%integer%:%integer%:%integer%],:%integer%::%integer%:%integer%:%integer%,::n::%integer%,",
+		"2012-04-05 17:54:47     local4.info     172.23.0.1      %asa-6-302015: built outbound udp connection 1315679 for outside:193.0.14.129/53 (193.0.14.129/53) to inside:172.23.0.10/64048 (10.32.0.1/52130)":                                                                                              "%time%%ipv4%:%integer%:%ipv4%/%integer%(%ipv4%/%integer%):%ipv4%/%integer%(%ipv4%/%integer%)",
+		"may  2 19:00:02 dlfssrv sendmail[18980]: taa18980: from user daemon: size is 596, class is 0, priority is 30596, and nrcpts=1, message id is <200305021400.taa18980@dlfssrv.in.ibm.com>, relay=daemon@localhost":                                                                                       "%time%[%integer%]:::%integer%,%integer%,%integer%,=%integer%,<>,=",
+		"jan 12 06:49:56 irc last message repeated 6 times":                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  "%time%%integer%",
+		"9.26.157.44 - - [16/jan/2003:21:22:59 -0500] \"get http://wssamples http/1.1\" 301 315":                                                                                                                                                                                                                                                                                                                                                                                                                                             "%ipv4%--[%time%]\"%url%\"%integer%%integer%",
+		"2012-04-05 17:51:26     local4.info     172.23.0.1      %asa-6-302016: teardown udp connection 1315632 for inside:172.23.0.2/514 to identity:172.23.0.1/514 duration 0:09:23 bytes 7999":                                                                                                                                                                                                                                                                                                                                            "%time%%ipv4%:%integer%:%ipv4%/%integer%:%ipv4%/%integer%%integer%:%integer%:%integer%%integer%",
+		"id=firewall time=\"2005-03-18 14:01:43\" fw=topsec priv=4 recorder=kernel type=conn policy=504 proto=tcp rule=deny src=210.82.121.91 sport=4958 dst=61.229.37.85 dport=23124 smac=00:0b:5f:b2:1d:80 dmac=00:04:c1:8b:d8:82":                                                                                                                                                                                                                                                                                                         "==\"%time%\"==%integer%===%integer%===%ipv4%=%integer%=%ipv4%=%integer%=%mac%=%mac%",
+		"mar 01 09:42:03.875 pffbisvr smtp[2424]: 334 warning: denied access to command 'ehlo vishwakstg1.msn.vishwak.net' from [209.235.210.30]":                                                                                                                                                                                                                                                                                                                                                                                            "%time%[%integer%]:%integer%:''[%ipv4%]",
+		"mar 01 09:45:02.596 pffbisvr smtp[2424]: 121 statistics: duration=181.14 user=<egreetings@vishwak.com> id=zduqd sent=1440 rcvd=356 srcif=d45f49a2-b30 src=209.235.210.30/61663 cldst=192.216.179.206/25 svsrc=172.17.74.195/8423 dstif=fd3c875c-064 dst=172.17.74.52/25 op=\"to 1 recips\" arg=<vishwakstg1ojte15fo000033b4@vishwakstg1.msn.vishwak.net> result=\"250 m2004030109385301402 message accepted for delivery\" proto=smtp rule=131 (denied access to command 'ehlo vishwakstg1.msn.vishwak.net' from [209.235.210.30])": "%time%[%integer%]:%integer%:=%float%=<>==%integer%=%integer%==%ipv4%/%integer%=%ipv4%/%integer%=%ipv4%/%integer%==%ipv4%/%integer%=\"\"=<>=\"%integer%\"==%integer%(''[%ipv4%])",
 	}
 )
 
@@ -58,7 +58,7 @@ func TestMessageSignature(t *testing.T) {
 var (
 	messages map[string]Sequence = map[string]Sequence{
 		"Jan 12 06:49:41 irc sshd[7034]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=218-161-81-238.hinet-ip.hinet.net  user=root": Sequence{
-			Token{TokenTS, FieldUnknown, "jan 12 06:49:41", false, false, 0},
+			Token{TokenTime, FieldUnknown, "jan 12 06:49:41", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "irc", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "sshd", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "[", false, false, 0},
@@ -97,7 +97,7 @@ var (
 		},
 
 		"Jan 12 06:49:42 irc sshd[7034]: Failed password for root from 218.161.81.238 port 4228 ssh2": Sequence{
-			Token{TokenTS, FieldUnknown, "jan 12 06:49:42", false, false, 0},
+			Token{TokenTime, FieldUnknown, "jan 12 06:49:42", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "irc", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "sshd", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "[", false, false, 0},
@@ -118,7 +118,7 @@ var (
 		//"Jan 13 17:25:59 jlz sshd[19322]: Accepted password for jlz from 108.61.8.124 port 56731 ssh2",
 		//"Jan 12 14:44:48 irc sshd[11084]: Accepted publickey for jlz from 76.21.0.16 port 36609 ssh2",
 		"Jan 12 06:49:56 irc last message repeated 6 times": Sequence{
-			Token{TokenTS, FieldUnknown, "jan 12 06:49:56", false, false, 0},
+			Token{TokenTime, FieldUnknown, "jan 12 06:49:56", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "irc", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "last", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "message", false, false, 0},
@@ -132,7 +132,7 @@ var (
 			Token{TokenLiteral, FieldUnknown, "-", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "-", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "[", false, false, 0},
-			Token{TokenTS, FieldUnknown, "16/jan/2003:21:22:59 -0500", false, false, 0},
+			Token{TokenTime, FieldUnknown, "16/jan/2003:21:22:59 -0500", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "]", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "\"", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "get", false, false, 0},
@@ -148,7 +148,7 @@ var (
 			Token{TokenLiteral, FieldUnknown, "-", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "-", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "[", false, false, 0},
-			Token{TokenTS, FieldUnknown, "16/jan/2003:21:22:59 -0500", false, false, 0},
+			Token{TokenTime, FieldUnknown, "16/jan/2003:21:22:59 -0500", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "]", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "\"", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "get", false, false, 0},
@@ -164,7 +164,7 @@ var (
 			Token{TokenLiteral, FieldUnknown, "-", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "-", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "[", false, false, 0},
-			Token{TokenTS, FieldUnknown, "03/may/2004:01:19:07 +0000", false, false, 0},
+			Token{TokenTime, FieldUnknown, "03/may/2004:01:19:07 +0000", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "]", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "\"", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "get", false, false, 0},
@@ -176,7 +176,7 @@ var (
 		},
 
 		"4/5/2012 17:55,172.23.1.101,1101,172.23.0.10,139, Generic Protocol Command Decode,3, [1:2100538:17] GPL NETBIOS SMB IPC$ unicode share access ,TCP TTL:128 TOS:0x0 ID:1643 IpLen:20 DgmLen:122 DF,***AP*** Seq: 0xCEF93F32  Ack: 0xC40C0BB  n: 0xFC9C  TcpLen: 20,": Sequence{
-			Token{TokenTS, FieldUnknown, "4/5/2012 17:55", false, false, 0},
+			Token{TokenTime, FieldUnknown, "4/5/2012 17:55", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, ",", false, false, 0},
 			Token{TokenIPv4, FieldUnknown, "172.23.1.101", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, ",", false, false, 0},
@@ -243,7 +243,7 @@ var (
 		},
 
 		"2012-04-05 17:51:26     Local4.Info     172.23.0.1      %ASA-6-302016: Teardown UDP connection 1315632 for inside:172.23.0.2/514 to identity:172.23.0.1/514 duration 0:09:23 bytes 7999": Sequence{
-			Token{TokenTS, FieldUnknown, "2012-04-05 17:51:26", false, false, 0},
+			Token{TokenTime, FieldUnknown, "2012-04-05 17:51:26", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "local4.info", false, false, 0},
 			Token{TokenIPv4, FieldUnknown, "172.23.0.1", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "%asa-6-302016", false, false, 0},
@@ -275,7 +275,7 @@ var (
 		},
 
 		"2012-04-05 17:54:47     Local4.Info     172.23.0.1      %ASA-6-302015: Built outbound UDP connection 1315679 for outside:193.0.14.129/53 (193.0.14.129/53) to inside:172.23.0.10/64048 (10.32.0.1/52130)": Sequence{
-			Token{TokenTS, FieldUnknown, "2012-04-05 17:54:47", false, false, 0},
+			Token{TokenTime, FieldUnknown, "2012-04-05 17:54:47", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "local4.info", false, false, 0},
 			Token{TokenIPv4, FieldUnknown, "172.23.0.1", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "%asa-6-302015", false, false, 0},
@@ -316,7 +316,7 @@ var (
 			Token{TokenLiteral, FieldUnknown, "time", true, false, 0},
 			Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "\"", false, false, 0},
-			Token{TokenTS, FieldUnknown, "2005-03-18 14:01:43", false, true, 0},
+			Token{TokenTime, FieldUnknown, "2005-03-18 14:01:43", false, true, 0},
 			Token{TokenLiteral, FieldUnknown, "\"", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "fw", true, false, 0},
 			Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
@@ -360,7 +360,7 @@ var (
 		},
 
 		"mar 01 09:42:03.875 pffbisvr smtp[2424]: 334 warning: denied access to command 'ehlo vishwakstg1.msn.vishwak.net' from [209.235.210.30]": Sequence{
-			Token{TokenTS, FieldUnknown, "mar 01 09:42:03.875", false, false, 0},
+			Token{TokenTime, FieldUnknown, "mar 01 09:42:03.875", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "pffbisvr", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "smtp", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "[", false, false, 0},
@@ -384,7 +384,7 @@ var (
 		},
 
 		"may  2 19:00:02 dlfssrv sendmail[18980]: taa18980: from user daemon: size is 596, class is 0, priority is 30596, and nrcpts=1, message id is <200305021400.taa18980@dlfssrv.in.ibm.com>, relay=daemon@localhost": Sequence{
-			Token{TokenTS, FieldUnknown, "may  2 19:00:02", false, false, 0},
+			Token{TokenTime, FieldUnknown, "may  2 19:00:02", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "dlfssrv", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "sendmail", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "[", false, false, 0},
@@ -427,7 +427,7 @@ var (
 		},
 
 		"mar 01 09:45:02.596 pffbisvr smtp[2424]: 121 statistics: duration=181.14 user=<egreetings@vishwak.com> id=zduqd sent=1440 rcvd=356 srcif=d45f49a2-b30 src=209.235.210.30/61663 cldst=192.216.179.206/25 svsrc=172.17.74.195/8423 dstif=fd3c875c-064 dst=172.17.74.52/25 op=\"to 1 recips\" arg=<vishwakstg1ojte15fo000033b4@vishwakstg1.msn.vishwak.net> result=\"250 m2004030109385301402 message accepted for delivery\" proto=smtp rule=131 (denied access to command 'ehlo vishwakstg1.msn.vishwak.net' from [209.235.210.30])": Sequence{
-			Token{TokenTS, FieldUnknown, "mar 01 09:45:02.596", false, false, 0},
+			Token{TokenTime, FieldUnknown, "mar 01 09:45:02.596", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "pffbisvr", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "smtp", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "[", false, false, 0},
@@ -483,9 +483,7 @@ var (
 			Token{TokenLiteral, FieldUnknown, "op", true, false, 0},
 			Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "\"", false, false, 0},
-			Token{TokenString, FieldUnknown, "to", false, true, 0},
-			Token{TokenInteger, FieldUnknown, "1", false, false, 0},
-			Token{TokenLiteral, FieldUnknown, "recips", false, false, 0},
+			Token{TokenString, FieldUnknown, "to 1 recips", false, true, 0},
 			Token{TokenLiteral, FieldUnknown, "\"", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "arg", true, false, 0},
 			Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
@@ -495,12 +493,7 @@ var (
 			Token{TokenLiteral, FieldUnknown, "result", true, false, 0},
 			Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "\"", false, false, 0},
-			Token{TokenInteger, FieldUnknown, "250", false, true, 0},
-			Token{TokenLiteral, FieldUnknown, "m2004030109385301402", false, false, 0},
-			Token{TokenLiteral, FieldUnknown, "message", false, false, 0},
-			Token{TokenLiteral, FieldUnknown, "accepted", false, false, 0},
-			Token{TokenLiteral, FieldUnknown, "for", false, false, 0},
-			Token{TokenLiteral, FieldUnknown, "delivery", false, false, 0},
+			Token{TokenInteger, FieldUnknown, "250 m2004030109385301402 message accepted for delivery", false, true, 0},
 			Token{TokenLiteral, FieldUnknown, "\"", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, "proto", true, false, 0},
 			Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
@@ -524,7 +517,7 @@ var (
 		},
 
 		"%createtime% %apphost% %appname% : %srcuser% : tty = %string% ; pwd = %string% ; user = %dstuser% ; command = %method-10%": Sequence{
-			Token{TokenTS, FieldCreateTime, "%createtime%", false, false, 0},
+			Token{TokenTime, FieldCreateTime, "%createtime%", false, false, 0},
 			Token{TokenString, FieldAppHost, "%apphost%", false, false, 0},
 			Token{TokenString, FieldAppName, "%appname%", false, false, 0},
 			Token{TokenLiteral, FieldUnknown, ":", false, false, 0},

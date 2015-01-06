@@ -1,0 +1,5 @@
+%createtime% %apphost% %appname% : %method% ( %string% : %action% ) : auth could not identify password for [ %dstuser% ]
+%createtime% %apphost% %appname% : %dstuser% : user not in sudoers ; tty = %string% ; pwd = %string% ; user = %srcuser% ; command = %method-10%
+%createtime% %apphost% %appname% : %srcuser% : tty = %string% ; pwd = %string% ; user = %dstuser% ; command = %method-10%
+%createtime% %apphost% %appname% : %method% ( %string% : %action% ) : authentication %status% ; logname = %srcuser% uid = %integer% euid = %integer% tty = %string% ruser = %srcuser% rhost = user = %dstuser%
+%createtime% %apphost% %appname% : %method% ( %string% : %action% ) : conversation %status%

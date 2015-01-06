@@ -19,8 +19,10 @@ import (
 	"strings"
 )
 
+// Sequence represents a list of tokens returned from the scanner, analyzer or parser.
 type Sequence []Token
 
+// String returns a single line string that represents the pattern for the Sequence
 func (this Sequence) String() string {
 	var p string
 
@@ -47,6 +49,8 @@ func (this Sequence) String() string {
 	return strings.TrimSpace(p)
 }
 
+// Signature returns a single line string that represents a common pattern for this
+// types of messages, basically stripping any strings or literals from the message.
 func (this Sequence) Signature() string {
 	var sig string
 
@@ -63,6 +67,7 @@ func (this Sequence) Signature() string {
 	return sig
 }
 
+// Longstring returns a multi-line representation of the tokens in the sequence
 func (this Sequence) LongString() string {
 	var str string
 	for i, t := range this {

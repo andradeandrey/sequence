@@ -16,24 +16,42 @@ package sequence
 
 import "fmt"
 
+// Token is a piece of information extracted from a log message. The Scanner will do
+// its best to determine the TokenType which could be a time stamp, IPv4 or IPv6
+// address, a URL, a mac address, an integer or a floating point number. In addition,
+// if the Scanner finds a token that's surrounded by %, e.g., %srcuser%, it will
+// try to determine the correct field type the token represents.
 type Token struct {
-	Type  TokenType
+	// Type is the type of token the Value represents.
+	Type TokenType
+
+	// Field determines which field the Value should be.
 	Field FieldType
+
+	// Value is the extracted string from the log message.
 	Value string
 
-	IsKey   bool
+	// IsKey represents whether this token is a key in a key=value pair.
+	IsKey bool
+
+	// IsValue represents whether this token is a value in a key=value pair.
 	IsValue bool
 
+	// Range represents the number of tokens this field should consume. It is only
+	// used if Field is not FieldUnknown.
 	Range int
 }
 
 func (this Token) String() string {
-	return fmt.Sprintf("{ Field=%q, Type=%q, Value=%q }", this.Field, this.Type, this.Value)
+	return fmt.Sprintf("{ Field=%q, Type=%q, Value=%q, IsKey=%t, IsValue=%t, Range=%d }",
+		this.Field, this.Type, this.Value, this.IsKey, this.IsValue, this.Range)
 }
 
 type (
-	// Semantic
+	// FieldType is the semantic representation of a token.
 	FieldType int
+
+	// Tokentype is the lexical representation of a token.
 	TokenType int
 )
 
@@ -48,70 +66,70 @@ const (
 )
 
 const (
-	TokenUnknown TokenType = iota
-	TokenLiteral
-	TokenTS
-	TokenIPv4
-	TokenIPv6
-	TokenInteger
-	TokenFloat
-	TokenURL
-	TokenMac
-	TokenString
-	token__END__ // All token types must be inserted before this one
+	TokenUnknown TokenType = iota // Unknown token
+	TokenLiteral                  // Token is a fixed literal
+	TokenTime                     // Token is a timestamp, in the format listed in TimeFormats
+	TokenIPv4                     // Token is an IPv4 address, in the form of a.b.c.d
+	TokenIPv6                     // Token is an IPv6 address, not currently supported
+	TokenInteger                  // Token is an integer number
+	TokenFloat                    // token is a floating point number
+	TokenURL                      // Token is an URL, in the form of http://... or https://...
+	TokenMac                      // Token is a mac address
+	TokenString                   // Token is a string that reprensents multiple possible values
+	token__END__                  // All token types must be inserted before this one
 )
 
 const (
-	FieldUnknown FieldType = iota
-	FieldMsgType
-	FieldMsgClass
-	FieldRecvTime
-	FieldCreateTime
-	FieldSeverity
-	FieldPriority
-	FieldAppHost
-	FieldAppIPv4
-	FieldAppName
-	FieldAppType
-	FieldSrcDomain
-	FieldSrcZone
-	FieldSrcHost
-	FieldSrcIPv4
-	FieldSrcIPv4NAT
-	FieldSrcIPv6
-	FieldSrcPort
-	FieldSrcPortNAT
-	FieldSrcMac
-	FieldSrcUser
-	FieldSrcEmail
-	FieldDstDomain
-	FieldDstZone
-	FieldDstHost
-	FieldDstIPv4
-	FieldDstIPv4NAT
-	FieldDstIPv6
-	FieldDstPort
-	FieldDstPortNAT
-	FieldDstMac
-	FieldDstUser
-	FieldDstEmail
-	FieldProtocol
-	FieldInIface
-	FieldOutIface
-	FieldPolicyID
-	FieldSessionID
-	FieldObject
-	FieldAction
-	FieldMethod
-	FieldMethodType
-	FieldStatus
-	FieldReason
-	FieldBytesRecv
-	FieldBytesSent
-	FieldPktsRecv
-	FieldPktsSent
-	FieldDuration
-	field__END__ // All field types must be inserted before this one
+	FieldUnknown    FieldType = iota
+	FieldMsgType              // Type of message
+	FieldMsgClass             // Class of the message
+	FieldRecvTime             // When the message is received
+	FieldCreateTime           // Timestamp that’s part of the log message, usually it’s the time of creation of the message.
+	FieldSeverity             // The severity of the event, e.g., Emergency, …
+	FieldPriority             // The pirority of the event
+	FieldAppHost              // The hostname of the host where the log message is generated
+	FieldAppIPv4              // The IP address of the host where the application that generated the log message is running on.
+	FieldAppName              // The name of the application that generated the log message, e.g., fw01, ids02, sshd
+	FieldAppType              // The type of application that generated the log message, e.g., CiscoPIX, Snort
+	FieldSrcDomain            // The domain name of the initiator of the event, usually a Windows domain
+	FieldSrcZone              // The originating zone
+	FieldSrcHost              // The hostname of the originator of the event or connection.
+	FieldSrcIPv4              // The IPv4 address of the originator of the event or connection.
+	FieldSrcIPv4NAT           // The natted (network address translation) IP of the originator of the event or connection.
+	FieldSrcIPv6              // The IPv6 address of the originator of the event or connection.
+	FieldSrcPort              // The port number of the originating connection.
+	FieldSrcPortNAT           // The natted port number of the originating connection.
+	FieldSrcMac               // The mac address of the host that originated the connection.
+	FieldSrcUser              // The user that originated the connection.
+	FieldSrcEmail             // The originating email address
+	FieldDstDomain            // The domain name of the destination of the event, usually a Windows domain
+	FieldDstZone              // The destination zone
+	FieldDstHost              // The hostname of the destination of the event or connection.
+	FieldDstIPv4              // The IPv4 address of the destination of the event or connection.
+	FieldDstIPv4NAT           // The natted (network address translation) IP of the destination of the event or connection.
+	FieldDstIPv6              // The IPv6 address of the destination of the event or connection.
+	FieldDstPort              // The destination port number of the connection.
+	FieldDstPortNAT           // The natted destination port number of the connection.
+	FieldDstMac               // The mac address of the destination host.
+	FieldDstUser              // The user at the destination host.
+	FieldDstEmail             // The destination email address
+	FieldProtocol             // The protocol, such as TCP, UDP, ICMP, of the connection
+	FieldInIface              // The incoming interface
+	FieldOutIface             // The outgoing interface
+	FieldPolicyID             // The policy ID
+	FieldSessionID            // The session or process ID
+	FieldObject               // The object affected.
+	FieldAction               // The action taken
+	FieldMethod               // The method in which the action was taken, for example, public key or password for ssh
+	FieldMethodType           // the method type
+	FieldStatus               // The status of the action taken
+	FieldReason               // The reason for the action taken
+	FieldBytesRecv            // The number of bytes received
+	FieldBytesSent            // The number of bytes sent
+	FieldPktsRecv             // The number of packets received
+	FieldPktsSent             // The number of packets sent
+	FieldDuration             // The duration of the session
+	field__END__              // All field types must be inserted before this one
 )
 
 func (this TokenType) String() string {
@@ -120,8 +138,8 @@ func (this TokenType) String() string {
 		return "%tunknown%"
 	case TokenLiteral:
 		return "%literal%"
-	case TokenTS:
-		return "%ts%"
+	case TokenTime:
+		return "%time%"
 	case TokenIPv4:
 		return "%ipv4%"
 	case TokenIPv6:
@@ -145,8 +163,8 @@ func name2TokenType(s string) TokenType {
 	switch s {
 	case "%literal%":
 		return TokenLiteral
-	case "%ts%":
-		return TokenTS
+	case "%time%":
+		return TokenTime
 	case "%ipv4%":
 		return TokenIPv4
 	case "%ipv6%":
@@ -276,9 +294,9 @@ func field2TokenType(s string) TokenType {
 	case "%msgclass%":
 		return TokenString
 	case "%recvtime%":
-		return TokenTS
+		return TokenTime
 	case "%createtime%":
-		return TokenTS
+		return TokenTime
 	case "%severity%":
 		return TokenInteger
 	case "%priority%":
@@ -376,8 +394,8 @@ var fieldTokenMap map[string]*Token = map[string]*Token{
 	"%funknown%":   &Token{TokenUnknown, FieldUnknown, "%funknown%", false, false, 0},
 	"%msgtype%":    &Token{TokenInteger, FieldMsgType, "%msgtype%", false, false, 0},
 	"%msgclass%":   &Token{TokenString, FieldMsgClass, "%msgclass%", false, false, 0},
-	"%recvtime%":   &Token{TokenTS, FieldRecvTime, "%recvtime%", false, false, 0},
-	"%createtime%": &Token{TokenTS, FieldCreateTime, "%createtime%", false, false, 0},
+	"%recvtime%":   &Token{TokenTime, FieldRecvTime, "%recvtime%", false, false, 0},
+	"%createtime%": &Token{TokenTime, FieldCreateTime, "%createtime%", false, false, 0},
 	"%severity%":   &Token{TokenInteger, FieldSeverity, "%severity%", false, false, 0},
 	"%priority%":   &Token{TokenInteger, FieldPriority, "%priority%", false, false, 0},
 	"%apphost%":    &Token{TokenString, FieldAppHost, "%apphost%", false, false, 0},
@@ -431,9 +449,9 @@ func field2Token(f string) Token {
 	case "%msgclass%":
 		return Token{TokenString, FieldMsgClass, "%msgclass%", false, false, 0}
 	case "%recvtime%":
-		return Token{TokenTS, FieldRecvTime, "%recvtime%", false, false, 0}
+		return Token{TokenTime, FieldRecvTime, "%recvtime%", false, false, 0}
 	case "%createtime%":
-		return Token{TokenTS, FieldCreateTime, "%createtime%", false, false, 0}
+		return Token{TokenTime, FieldCreateTime, "%createtime%", false, false, 0}
 	case "%severity%":
 		return Token{TokenInteger, FieldSeverity, "%severity%", false, false, 0}
 	case "%priority%":

@@ -29,9 +29,9 @@ var (
 	}
 
 	analyzerSshdPatterns []string = []string{
-		"%ts% %string% sshd [ %integer% ] : %string% %string% for %string% from %ipv4% port %integer% ssh2",
-		"%ts% %string% sshd [ %integer% ] : %string% %string% for %string% from %ipv4% port %integer% ssh2",
-		"%ts% %string% sshd [ %integer% ] : %string% %string% for %string% from %ipv4% port %integer% ssh2",
+		"%time% %string% sshd [ %integer% ] : %string% %string% for %string% from %ipv4% port %integer% ssh2",
+		"%time% %string% sshd [ %integer% ] : %string% %string% for %string% from %ipv4% port %integer% ssh2",
+		"%time% %string% sshd [ %integer% ] : %string% %string% for %string% from %ipv4% port %integer% ssh2",
 	}
 
 	analyzerKeyValueSamples []string = []string{
@@ -40,8 +40,8 @@ var (
 	}
 
 	analyzerKeyValuePatterns []string = []string{
-		"id = %string% time = \" %ts% \" fw = %string% priv = %integer% recorder = %string% type = %string% policy = %integer% proto = %string% rule = %string% src = %ipv4% sport = %integer% dst = %ipv4% dport = %integer% duration = %integer% inpkt = %integer% outpkt = %integer% sent = %integer% rcvd = %integer% smac = %mac% dmac = %mac%",
-		"id = %string% time = \" %ts% \" fw = %string% priv = %integer% recorder = %string% type = %string% policy = %integer% proto = %string% rule = %string% src = %ipv4% sport = %integer% dst = %ipv4% dport = %integer% smac = %mac% dmac = %mac%",
+		"id = %string% time = \" %time% \" fw = %string% priv = %integer% recorder = %string% type = %string% policy = %integer% proto = %string% rule = %string% src = %ipv4% sport = %integer% dst = %ipv4% dport = %integer% duration = %integer% inpkt = %integer% outpkt = %integer% sent = %integer% rcvd = %integer% smac = %mac% dmac = %mac%",
+		"id = %string% time = \" %time% \" fw = %string% priv = %integer% recorder = %string% type = %string% policy = %integer% proto = %string% rule = %string% src = %ipv4% sport = %integer% dst = %ipv4% dport = %integer% smac = %mac% dmac = %mac%",
 	}
 )
 
@@ -61,8 +61,8 @@ func TestAnalyzerMergeNodes(t *testing.T) {
 	for i := 1; i < numAllTypes; i++ {
 		node := atree.levels[l][i]
 
-		if i == numFieldTypes+int(TokenTS) {
-			assert.NotNil(t, true, node, fmt.Sprintf("Expected: levels[%d][TokenTS] != nil, Actual: got nil", l))
+		if i == numFieldTypes+int(TokenTime) {
+			assert.NotNil(t, true, node, fmt.Sprintf("Expected: levels[%d][TokenTime] != nil, Actual: got nil", l))
 		} else {
 			assert.Nil(t, true, node, fmt.Sprintf("Expected: levels[%d][%d] == nil, Actual: got non-nil %s", l, i, node))
 		}

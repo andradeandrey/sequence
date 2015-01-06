@@ -12,12 +12,185 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// The `sequence` command is a _sequential semantic log message analyzer and parser_.
+//
+// It is _sequential_ because it goes through a log message sequentially and does not
+// use regular expressions. It is _semantic_ because it tries to extract meaningful
+// information out of the log messages and give them semantic indicators, e.g.,
+// src IPv4 or dst IPv4. It is an _analyzer_ because analyzes a large corpus of
+// text-based log messages and try to determine the unique patterns that would
+// represent all of them. It is a _parser_ because it will take a message and
+// parses out the meaningful parts.
+//
+//    Usage:
+//      sequence [command]
+//
+//    Available Commands:
+//      scan                      scan will tokenize a log file or message and output a list of tokens
+//      analyze                   analyze will analyze a log file and output a list of patterns that will match all the log messages
+//      parse                     parse will parse a log file and output a list of parsed tokens for each of the log messages
+//      bench                     benchmark the parsing of a log file, no output is provided
+//      help [command]            Help about any command
+//
+// ### Scan
+//
+//   Usage:
+//     sequence scan [flags]
+//
+//    Available Flags:
+//     -h, --help=false: help for scan
+//     -m, --msg="": message to tokenize
+//
+// Example
+//
+//   $ ./sequence scan -m "jan 14 10:15:56 testserver sudo:    gonner : tty=pts/3 ; pwd=/home/gonner ; user=root ; command=/bin/su - ustream"
+//   #   0: { Field="%funknown%", Type="%ts%", Value="jan 14 10:15:56" }
+//   #   1: { Field="%funknown%", Type="%literal%", Value="testserver" }
+//   #   2: { Field="%funknown%", Type="%literal%", Value="sudo" }
+//   #   3: { Field="%funknown%", Type="%literal%", Value=":" }
+//   #   4: { Field="%funknown%", Type="%literal%", Value="gonner" }
+//   #   5: { Field="%funknown%", Type="%literal%", Value=":" }
+//   #   6: { Field="%funknown%", Type="%literal%", Value="tty" }
+//   #   7: { Field="%funknown%", Type="%literal%", Value="=" }
+//   #   8: { Field="%funknown%", Type="%string%", Value="pts/3" }
+//   #   9: { Field="%funknown%", Type="%literal%", Value=";" }
+//   #  10: { Field="%funknown%", Type="%literal%", Value="pwd" }
+//   #  11: { Field="%funknown%", Type="%literal%", Value="=" }
+//   #  12: { Field="%funknown%", Type="%string%", Value="/home/gonner" }
+//   #  13: { Field="%funknown%", Type="%literal%", Value=";" }
+//   #  14: { Field="%funknown%", Type="%literal%", Value="user" }
+//   #  15: { Field="%funknown%", Type="%literal%", Value="=" }
+//   #  16: { Field="%funknown%", Type="%string%", Value="root" }
+//   #  17: { Field="%funknown%", Type="%literal%", Value=";" }
+//   #  18: { Field="%funknown%", Type="%literal%", Value="command" }
+//   #  19: { Field="%funknown%", Type="%literal%", Value="=" }
+//   #  20: { Field="%funknown%", Type="%string%", Value="/bin/su" }
+//   #  21: { Field="%funknown%", Type="%literal%", Value="-" }
+//   #  22: { Field="%funknown%", Type="%literal%", Value="ustream" }
+//
+// ### Analyze
+//
+//   Usage:
+//     sequence analyze [flags]
+//
+//    Available Flags:
+//     -h, --help=false: help for analyze
+//     -i, --infile="": input file, required
+//     -o, --outfile="": output file, if empty, to stdout
+//     -d, --patdir="": pattern directory,, all files in directory will be used, optional
+//     -p, --patfile="": initial pattern file, optional
+//
+// The following command analyzes a set of sshd log messages, and output the
+// patterns to the sshd.pat file. In this example, `sequence` analyzed over 200K
+// messages and found 45 unique patterns. Notice we are not supplying an existing
+// pattern file, so it treats all the patters as new.
+//
+//   $ ./sequence analyze -i ../../data/sshd.all  -o sshd.pat
+//   Analyzed 212897 messages, found 45 unique patterns, 45 are new.
+//
+// And the output file has entries such as:
+//
+//   %ts% %string% sshd [ %integer% ] : %string% ( sshd : %string% ) : session %string% for user %string% by ( uid = %integer% )
+//   # Jan 15 19:39:26 jlz sshd[7778]: pam_unix(sshd:session): session opened for user jlz by (uid=0)
+//
+// In the following command, we added an existing pattern file to the mix, which has
+// a set of existing rules. Notice now there are only 35 unique patterns, and we were
+// able to parse all of the log messages (no new patterns). There are fewer patterns
+// because some of the patterns were combined.
+//
+//   $ ./sequence analyze -d ../../patterns -i ../../data/sshd.all  -o sshd.pat
+//   Analyzed 212897 messages, found 35 unique patterns, 0 are new.
+//
+// The same log message we saw above now has an entry like the following:
+//
+//   %createtime% %apphost% %appname% [ %sessionid% ] : %string% ( sshd : %string% ) : %object% %action% for user %dstuser% by ( uid = %integer% )
+//   # Jan 15 19:39:26 jlz sshd[7778]: pam_unix(sshd:session): session opened for user jlz by (uid=0)
+//
+// ### Parse
+//
+//   Usage:
+//     sequence parse [flags]
+//
+//    Available Flags:
+//     -h, --help=false: help for parse
+//     -i, --infile="": input file, required
+//     -o, --outfile="": output file, if empty, to stdout
+//     -d, --patdir="": pattern directory,, all files in directory will be used
+//     -p, --patfile="": initial pattern file, required
+//
+// The following command parses a file based on existing rules. Note that the
+// performance number (9570.20 msgs/sec) is mostly due to reading/writing to disk.
+// To get a more realistic performance number, see the benchmark section below.
+//
+//   $ ./sequence parse -d ../../patterns -i ../../data/sshd.all  -o parsed.sshd
+//   Parsed 212897 messages in 22.25 secs, ~ 9570.20 msgs/sec
+//
+// This is an entry from the output file:
+//
+//   Jan 15 19:39:26 jlz sshd[7778]: pam_unix(sshd:session): session opened for user jlz by (uid=0)
+//   #   0: { Field="%createtime%", Type="%ts%", Value="jan 15 19:39:26" }
+//   #   1: { Field="%apphost%", Type="%string%", Value="jlz" }
+//   #   2: { Field="%appname%", Type="%string%", Value="sshd" }
+//   #   3: { Field="%funknown%", Type="%literal%", Value="[" }
+//   #   4: { Field="%sessionid%", Type="%integer%", Value="7778" }
+//   #   5: { Field="%funknown%", Type="%literal%", Value="]" }
+//   #   6: { Field="%funknown%", Type="%literal%", Value=":" }
+//   #   7: { Field="%funknown%", Type="%string%", Value="pam_unix" }
+//   #   8: { Field="%funknown%", Type="%literal%", Value="(" }
+//   #   9: { Field="%funknown%", Type="%literal%", Value="sshd" }
+//   #  10: { Field="%funknown%", Type="%literal%", Value=":" }
+//   #  11: { Field="%funknown%", Type="%string%", Value="session" }
+//   #  12: { Field="%funknown%", Type="%literal%", Value=")" }
+//   #  13: { Field="%funknown%", Type="%literal%", Value=":" }
+//   #  14: { Field="%object%", Type="%string%", Value="session" }
+//   #  15: { Field="%action%", Type="%string%", Value="opened" }
+//   #  16: { Field="%funknown%", Type="%literal%", Value="for" }
+//   #  17: { Field="%funknown%", Type="%literal%", Value="user" }
+//   #  18: { Field="%dstuser%", Type="%string%", Value="jlz" }
+//   #  19: { Field="%funknown%", Type="%literal%", Value="by" }
+//   #  20: { Field="%funknown%", Type="%literal%", Value="(" }
+//   #  21: { Field="%funknown%", Type="%literal%", Value="uid" }
+//   #  22: { Field="%funknown%", Type="%literal%", Value="=" }
+//   #  23: { Field="%funknown%", Type="%integer%", Value="0" }
+//   #  24: { Field="%funknown%", Type="%literal%", Value=")" }
+//
+// ### Benchmark
+//
+//   Usage:
+//     sequence bench [flags]
+//
+//    Available Flags:
+//     -c, --cpuprofile="": CPU profile filename
+//     -h, --help=false: help for bench
+//     -i, --infile="": input file, required
+//     -d, --patdir="": pattern directory,, all files in directory will be used
+//     -p, --patfile="": pattern file, required
+//     -w, --workers=1: number of parsing workers
+//
+// The following command will benchmark the parsing of two files. First file is a
+// bunch of sshd logs, averaging 98 bytes per message. The second is a Cisco ASA
+// log file, averaging 180 bytes per message.
+//
+//   $ ./sequence bench -p ../../patterns/sshd.txt -i ../../data/sshd.all
+//   Parsed 212897 messages in 2.65 secs, ~ 80449.93 msgs/sec
+//
+//   $ ./sequence bench -p ../../patterns/asa.txt -i ../../data/allasa.log
+//   Parsed 234815 messages in 4.42 secs, ~ 53081.36 msgs/sec
+//
+// Performance can be improved by adding more cores:
+//
+//   GOMAXPROCS=2 ./sequence bench -p ../../patterns/sshd.txt -i ../../data/sshd.all -w 2
+//   Parsed 212897 messages in 1.52 secs, ~ 140139.27 msgs/sec
+//
+//   $ GOMAXPROCS=2 ./sequence bench -p ../../patterns/asa.txt -i ../../data/allasa.log -w 2
+//   Parsed 234815 messages in 2.51 secs, ~ 93614.09 msgs/sec
 package main
 
 import (
 	"bufio"
 	"compress/gzip"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -61,6 +234,7 @@ var (
 	infile     string
 	outfile    string
 	patfile    string
+	patdir     string
 	cpuprofile string
 	workers    int
 
@@ -77,18 +251,19 @@ func init() {
 
 	analyzeCmd.Flags().StringVarP(&infile, "infile", "i", "", "input file, required")
 	analyzeCmd.Flags().StringVarP(&patfile, "patfile", "p", "", "initial pattern file, optional")
+	analyzeCmd.Flags().StringVarP(&patdir, "patdir", "d", "", "pattern directory,, all files in directory will be used, optional")
 	analyzeCmd.Flags().StringVarP(&outfile, "outfile", "o", "", "output file, if empty, to stdout")
-	analyzeCmd.Flags().StringVarP(&cpuprofile, "cpuprofile", "c", "", "CPU profile filename")
 	analyzeCmd.Run = analyze
 
 	parseCmd.Flags().StringVarP(&infile, "infile", "i", "", "input file, required ")
 	parseCmd.Flags().StringVarP(&patfile, "patfile", "p", "", "initial pattern file, required")
+	parseCmd.Flags().StringVarP(&patdir, "patdir", "d", "", "pattern directory,, all files in directory will be used")
 	parseCmd.Flags().StringVarP(&outfile, "outfile", "o", "", "output file, if empty, to stdout")
-	parseCmd.Flags().StringVarP(&cpuprofile, "cpuprofile", "c", "", "CPU profile filename")
 	parseCmd.Run = parse
 
 	benchCmd.Flags().StringVarP(&infile, "infile", "i", "", "input file, required ")
-	benchCmd.Flags().StringVarP(&patfile, "patfile", "p", "", "initial pattern file, required")
+	benchCmd.Flags().StringVarP(&patfile, "patfile", "p", "", "pattern file, required")
+	benchCmd.Flags().StringVarP(&patdir, "patdir", "d", "", "pattern directory,, all files in directory will be used")
 	benchCmd.Flags().StringVarP(&cpuprofile, "cpuprofile", "c", "", "CPU profile filename")
 	benchCmd.Flags().IntVarP(&workers, "workers", "w", 1, "number of parsing workers")
 	benchCmd.Run = bench
@@ -152,7 +327,7 @@ func analyze(cmd *cobra.Command, args []string) {
 
 	profile()
 
-	parser := buildParser(patfile)
+	parser := buildParser()
 	analyzer := sequence.NewAnalyzer()
 
 	// Open input file
@@ -171,7 +346,8 @@ func analyze(cmd *cobra.Command, args []string) {
 
 		seq, err := s.Scan(line)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
+			continue
 		}
 
 		if _, err = parser.Parse(seq); err != nil {
@@ -249,17 +425,13 @@ func analyze(cmd *cobra.Command, args []string) {
 }
 
 func parse(cmd *cobra.Command, args []string) {
-	if patfile == "" {
-		log.Fatal("Invalid pattern file")
-	}
-
 	if infile == "" {
 		log.Fatal("Invalid input file")
 	}
 
 	profile()
 
-	parser := buildParser(patfile)
+	parser := buildParser()
 
 	iscan, ifile := openFile(infile)
 	defer ifile.Close()
@@ -283,12 +455,11 @@ func parse(cmd *cobra.Command, args []string) {
 			log.Fatal(err)
 		}
 
-		//pseq, err := parser.Parse(seq)
-		_, err = parser.Parse(seq)
+		pseq, err := parser.Parse(seq)
 		if err != nil {
 			log.Printf("Error parsing: %s", line)
 		} else {
-			//fmt.Fprintf(ofile, "%s\n%s\n\n", line, pseq.LongString())
+			fmt.Fprintf(ofile, "%s\n%s\n\n", line, pseq.LongString())
 		}
 	}
 
@@ -299,17 +470,11 @@ func parse(cmd *cobra.Command, args []string) {
 }
 
 func bench(cmd *cobra.Command, args []string) {
-	if patfile == "" {
-		log.Fatal("Invalid pattern file")
-	}
-
 	if infile == "" {
 		log.Fatal("Invalid input file")
 	}
 
-	profile()
-
-	parser := buildParser(patfile)
+	parser := buildParser()
 
 	iscan, ifile := openFile(infile)
 	defer ifile.Close()
@@ -327,9 +492,11 @@ func bench(cmd *cobra.Command, args []string) {
 		lines = append(lines, line)
 	}
 
+	profile()
+
 	s := sequence.NewScanner()
 	now := time.Now()
-	msgpipe := make(chan string, 1000)
+	msgpipe := make(chan string, 10000)
 	done2 := make(chan struct{})
 	total := int64(0)
 
@@ -338,12 +505,13 @@ func bench(cmd *cobra.Command, args []string) {
 			for line := range msgpipe {
 				seq, err := s.Scan(line)
 				if err != nil {
-					log.Fatal(err)
+					//log.Fatal(err)
+					continue
 				}
 
 				_, err = parser.Parse(seq)
 				if err != nil {
-					log.Printf("Error parsing: %s", line)
+					//log.Printf("Error parsing: %s", line)
 				}
 
 				t2 := atomic.AddInt64(&total, 1)
@@ -372,15 +540,23 @@ func bench(cmd *cobra.Command, args []string) {
 	<-done
 }
 
-func buildParser(patfile string) *sequence.Parser {
+func buildParser() *sequence.Parser {
 	parser := sequence.NewParser()
+	s := sequence.NewScanner()
+
+	var files []string
+
+	if patdir != "" {
+		files = getDirOfFiles(patdir)
+	}
 
 	if patfile != "" {
-		// Open pattern file
-		pscan, pfile := openFile(patfile)
-		defer pfile.Close()
+		files = append(files, patfile)
+	}
 
-		s := sequence.NewScanner()
+	for _, file := range files {
+		// Open pattern file
+		pscan, pfile := openFile(file)
 
 		for pscan.Scan() {
 			line := pscan.Text()
@@ -398,6 +574,8 @@ func buildParser(patfile string) *sequence.Parser {
 				log.Fatal(err)
 			}
 		}
+
+		pfile.Close()
 	}
 
 	return parser
@@ -423,6 +601,21 @@ func openFile(fname string) (*bufio.Scanner, *os.File) {
 	}
 
 	return s, f
+}
+
+func getDirOfFiles(path string) []string {
+	filenames := make([]string, 0, 10)
+
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, f := range files {
+		filenames = append(filenames, path+"/"+f.Name())
+	}
+
+	return filenames
 }
 
 func openOutputFile(fname string) *os.File {

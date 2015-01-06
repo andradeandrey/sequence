@@ -22,6 +22,45 @@ import (
 	"github.com/willf/bitset"
 )
 
+// Analyzer builds an analysis tree that represents all the Sequences from messages.
+// It can be used to determine all of the unique patterns for a large body of messages.
+//
+// It's based on a single basic concept, that for multiple log messages, if tokens in
+// the same position shares one same parent and one same child, then the tokens in
+// that position is likely variable string, which means it's something we can extract.
+// For example, take a look at the following two messages:
+//
+//   Jan 12 06:49:42 irc sshd[7034]: Accepted password for root from 218.161.81.238 port 4228 ssh2
+//   Jan 12 14:44:48 jlz sshd[11084]: Accepted publickey for jlz from 76.21.0.16 port 36609 ssh2
+//
+// The first token of each message is a timestamp, and the 3rd token of each message
+// is the literal "sshd". For the literals "irc" and "jlz", they both share a common
+// parent, which is a timestamp. They also both share a common child, which is "sshd".
+// This means token in between these, the 2nd token in each message, likely represents
+// a variable token in this message type. In this case, "irc" and "jlz" happens to
+// represent the syslog host.
+//
+// Looking further down the message, the literals "password" and "publickey" also
+// share a common parent, "Accepted", and a common child, "for". So that means the
+// token in this position is also a variable token (of type TokenString).
+//
+// You can find several tokens that share common parent and child in these two
+// messages, which means each of these tokens can be extracted. And finally, we can
+// determine that the single pattern that will match both is:
+//
+//   %time% %string% sshd [ %integer% ] : Accepted %string% for %string% from %ipv4% port %integer% ssh2
+//
+// If later we add another message to this mix:
+//
+//   Jan 12 06:49:42 irc sshd[7034]: Failed password for root from 218.161.81.238 port 4228 ssh2
+//
+// The Analyzer will determine that the literals "Accepted" in the 1st message, and
+// "Failed" in the 3rd message share a common parent ":" and a common child "password",
+// so it will determine that the token in this position is also a variable token.
+// After all three messages are analyzed, the final pattern that will match all three
+// messages is:
+//
+//   %time% %string% sshd [ %integer% ] : %string% %string% for %string% from %ipv4% port %integer% ssh2
 type Analyzer struct {
 	root *analyzerNode
 	leaf *analyzerNode
@@ -81,6 +120,8 @@ func (this *analyzerNode) String() string {
 		this.isKey, this.isValue, this.leafNode, this.parents.DumpAsBits(), this.children.DumpAsBits())
 }
 
+// Analyze analyzes the message sequence supplied, and returns the unique pattern
+// that will match this message.
 func (this *Analyzer) Analyze(seq Sequence) (Sequence, error) {
 	this.mu.RLock()
 	defer this.mu.RUnlock()
@@ -100,6 +141,9 @@ func (this *Analyzer) Analyze(seq Sequence) (Sequence, error) {
 	return seq2, nil
 }
 
+// Add adds a single message sequence to the analysis tree. It will not determine
+// if the tokens share a common parent or child at this point. After all the sequences
+// are added, then Finalize() should be called.
 func (this *Analyzer) Add(seq Sequence) error {
 	this.mu.Lock()
 	defer this.mu.Unlock()
@@ -200,9 +244,9 @@ func (this *Analyzer) Add(seq Sequence) error {
 	return nil
 }
 
-// finalize has 2 phases
-// 1. merge all the nodes that share at least 1 parent and 1 child
-// 2. compact the trees and remove all dead nodes
+// Finalize will go through the analysis tree and determine which tokens share common
+// parent and child, merge all the nodes that share at least 1 parent and 1 child,
+// and finally compact the tree and remove all dead nodes.
 func (this *Analyzer) Finalize() error {
 	this.mu.Lock()
 	defer this.mu.Unlock()

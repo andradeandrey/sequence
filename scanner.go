@@ -31,6 +31,12 @@ var (
 	ErrInvalidCount    = errors.New("sequence: invalid count for field token")
 )
 
+// Scanner is a sequential lexical analyzer that breaks a log message into a sequence
+// of tokens. It is sequential because it goes through log message sequentially
+// tokentizing each part of the message, without the use of regular expressions.
+// The scanner currently recognizes time stamps, IPv4 addresses, URLs, MAC addresses,
+// integers and floating point numbers. It also recgonizes key=value or key="value"
+// or key='value' or key=<value> pairs.
 type Scanner struct {
 }
 
@@ -38,6 +44,86 @@ func NewScanner() *Scanner {
 	return &Scanner{}
 }
 
+// Scan returns a Sequence, or a list of tokens, for the data string supplied.
+// For example, the following message
+//
+//   Jan 12 06:49:42 irc sshd[7034]: Failed password for root from 218.161.81.238 port 4228 ssh2
+//
+// Returns the following Sequence:
+//
+//   Sequence{
+//   	Token{TokenTime, FieldUnknown, "jan 12 06:49:42", false, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "irc", false, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "sshd", false, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "[", false, false, 0},
+//   	Token{TokenInteger, FieldUnknown, "7034", false, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "]", false, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, ":", false, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "failed", false, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "password", false, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "for", false, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "root", false, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "from", false, false, 0},
+//   	Token{TokenIPv4, FieldUnknown, "218.161.81.238", false, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "port", false, false, 0},
+//   	Token{TokenInteger, FieldUnknown, "4228", false, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "ssh2", false, false, 0},
+//   }
+//
+// The following message
+//
+//   id=firewall time="2005-03-18 14:01:43" fw=TOPSEC priv=4 recorder=kernel type=conn policy=504 proto=TCP rule=deny src=210.82.121.91 sport=4958 dst=61.229.37.85 dport=23124 smac=00:0b:5f:b2:1d:80 dmac=00:04:c1:8b:d8:82
+//
+// Will return
+//   Sequence{
+//   	Token{TokenLiteral, FieldUnknown, "id", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenString, FieldUnknown, "firewall", false, true, 0},
+//   	Token{TokenLiteral, FieldUnknown, "time", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "\"", false, false, 0},
+//   	Token{TokenTime, FieldUnknown, "2005-03-18 14:01:43", false, true, 0},
+//   	Token{TokenLiteral, FieldUnknown, "\"", false, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "fw", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenString, FieldUnknown, "topsec", false, true, 0},
+//   	Token{TokenLiteral, FieldUnknown, "priv", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenInteger, FieldUnknown, "4", false, true, 0},
+//   	Token{TokenLiteral, FieldUnknown, "recorder", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenString, FieldUnknown, "kernel", false, true, 0},
+//   	Token{TokenLiteral, FieldUnknown, "type", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenString, FieldUnknown, "conn", false, true, 0},
+//   	Token{TokenLiteral, FieldUnknown, "policy", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenInteger, FieldUnknown, "504", false, true, 0},
+//   	Token{TokenLiteral, FieldUnknown, "proto", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenString, FieldUnknown, "tcp", false, true, 0},
+//   	Token{TokenLiteral, FieldUnknown, "rule", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenString, FieldUnknown, "deny", false, true, 0},
+//   	Token{TokenLiteral, FieldUnknown, "src", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenIPv4, FieldUnknown, "210.82.121.91", false, true, 0},
+//   	Token{TokenLiteral, FieldUnknown, "sport", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenInteger, FieldUnknown, "4958", false, true, 0},
+//   	Token{TokenLiteral, FieldUnknown, "dst", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenIPv4, FieldUnknown, "61.229.37.85", false, true, 0},
+//   	Token{TokenLiteral, FieldUnknown, "dport", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenInteger, FieldUnknown, "23124", false, true, 0},
+//   	Token{TokenLiteral, FieldUnknown, "smac", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenMac, FieldUnknown, "00:0b:5f:b2:1d:80", false, true, 0},
+//   	Token{TokenLiteral, FieldUnknown, "dmac", true, false, 0},
+//   	Token{TokenLiteral, FieldUnknown, "=", false, false, 0},
+//   	Token{TokenMac, FieldUnknown, "00:04:c1:8b:d8:82", false, true, 0},
+//   }
 func (this Scanner) Scan(data string) (Sequence, error) {
 	msg := &message{data: data}
 	if err := msg.tokenize(); err != nil {
@@ -66,8 +152,8 @@ type message struct {
 		// double quote
 		double bool
 
-		// angle bracket
-		angle bool
+		// square and angle bracket
+		square, angle bool
 
 		// cursor positions
 		cur, start, end int
@@ -124,32 +210,18 @@ func (this *message) scan() error {
 		v := this.data[this.state.start : this.state.start+l]
 		this.state.start += l
 
+		switch t {
+		case TokenMac, TokenLiteral, TokenURL, TokenTime:
+			v = strings.ToLower(v)
+		}
+
 		token := Token{Type: t, Value: v, Field: FieldUnknown}
 
-		switch {
-		case v == "'":
-			if this.state.single {
-				this.state.single = false
-			} else {
-				this.state.single = true
-			}
-
-		case v == "\"":
-			if this.state.double {
-				this.state.double = false
-			} else {
-				this.state.double = true
-			}
-
-		case v == "<":
-			this.state.angle = true
-
-		case v == ">":
-			this.state.angle = false
-
-		case v[0] == '%' && v[len(v)-1] == '%':
+		if v[0] == '%' && v[len(v)-1] == '%' {
 			var err error
 			r := int64(0)
+
+			// Check to see if it's a %something-N% token
 			parts := strings.Split(v[:len(v)-1], "-")
 
 			if len(parts) > 1 {
@@ -184,37 +256,86 @@ func (this *message) scan() error {
 		}
 
 		switch {
-		case nss == 0 && v == "=":
+		case nss == 0 && v == "=" && !this.state.nextIsValue:
 			// This means we hit something like "abc=", so we assume abc, which is the
 			// last token, is a key. It also means the next token should be a value
 			if len(this.tokens) >= 1 {
 				this.tokens[len(this.tokens)-1].IsKey = true
+				this.tokens[len(this.tokens)-1].Type = TokenLiteral
+				this.tokens[len(this.tokens)-1].IsValue = false
 				this.state.nextIsValue = true
 			}
 
-		case nss == 0 && this.state.nextIsValue:
-			if v == "'" || v == "\"" || v == "<" || v == ">" {
-				// We hit something like ="def", so let's track how far away from the
-				// = sign we will be.
-				if this.state.valueDistance == 0 {
-					this.state.valueDistance = 1
-					this.state.nextIsValue = true
-				} else {
-					this.state.valueDistance = 0
-					this.state.nextIsValue = false
-				}
-			} else {
-				// This means we hit something like "=def", so if the token before the
-				// "=" is a key, then this must be a value of the kv pair.
-				keyDistance := 2 + this.state.valueDistance
-
-				if len(this.tokens) >= keyDistance && this.tokens[len(this.tokens)-keyDistance].IsKey && !this.tokens[len(this.tokens)-keyDistance].IsValue {
-					token.IsValue = true
-					this.state.nextIsValue = false
-					this.state.valueDistance = 0
-					if token.Type == TokenLiteral {
-						token.Type = TokenString
+		case this.state.nextIsValue:
+			switch v {
+			/*
+				case "'":
+					if this.state.single {
+						this.state.single = false
+						this.state.valueDistance = 0
+						this.state.nextIsValue = false
+					} else {
+						this.state.single = true
+						this.state.valueDistance = 1
 					}
+			*/
+
+			case "\"":
+				if this.state.double {
+					this.state.double = false
+					this.state.valueDistance = 0
+					this.state.nextIsValue = false
+				} else {
+					this.state.double = true
+					this.state.valueDistance = 1
+				}
+
+			case "<":
+				this.state.angle = true
+				this.state.valueDistance = 1
+
+			case ">":
+				this.state.angle = false
+				this.state.valueDistance = 0
+				this.state.nextIsValue = false
+
+			case "[":
+				this.state.square = true
+				this.state.valueDistance = 1
+
+			case "]":
+				this.state.square = false
+				this.state.valueDistance = 0
+				this.state.nextIsValue = false
+
+			default:
+				last := len(this.tokens) - 1
+				if this.tokens[last].IsValue {
+					// Last token is a value and we are inside a quote, so let's
+					// merge with the last token
+					if nss > 0 {
+						this.tokens[last].Value += " " + v
+					} else {
+						this.tokens[last].Value += v
+					}
+					this.state.prevToken = this.tokens[last]
+
+					if this.insideQuote() {
+						this.state.valueDistance++
+					}
+					return nil
+				}
+
+				// Last token is NOT a value, so we need to create a new one
+				token.IsValue = true
+
+				if token.Type == TokenLiteral {
+					token.Type = TokenString
+				}
+
+				if !this.insideQuote() {
+					this.state.nextIsValue = false
+					this.state.valueDistance = 0
 				}
 			}
 
@@ -227,6 +348,7 @@ func (this *message) scan() error {
 			this.state.nextIsValue = false
 			this.state.valueDistance = 0
 			return nil
+
 		}
 
 		this.tokens = append(this.tokens, token)
@@ -286,7 +408,7 @@ func (this *message) scanToken(data string) (int, TokenType, error) {
 				timeStop = true
 
 				if timeLen > 0 {
-					return timeLen, TokenTS, nil
+					return timeLen, TokenTime, nil
 				}
 			} else if cur.final != TokenUnknown {
 				if i+1 > timeLen {
@@ -346,7 +468,7 @@ func (this *message) tokenStep(index int, r rune) {
 	case index == 0 && (r == 'h' || r == 'H'):
 		this.state.tokenType = TokenURL
 
-	case (r >= 'a' && r <= 'z') || r == '-' || r == '_' || r == '/' || r == '\\' || r == '%' || r == '*' || r == '@' || r == '$' || (r >= 'a' && r <= 'Z'):
+	case (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || r == '-' || r == '_' || r == '/' || r == '#' || r == '\\' || r == '%' || r == '*' || r == '@' || r == '$' || r == '?':
 		if r == '/' {
 			if this.state.tokenType == TokenIPv4 {
 				this.state.tokenStop = true
@@ -386,12 +508,12 @@ func (this *message) tokenStep(index int, r rune) {
 
 	case r == '\'':
 		if index == 0 && this.state.single == false {
-			//this.state.single = true
+			this.state.single = true
 			this.state.tokenStop = true
 		} else if index != 0 && this.state.single == true {
 			this.state.tokenStop = true
 		} else if index == 0 && this.state.single == true {
-			//this.state.single = false
+			this.state.single = false
 			this.state.tokenStop = true
 		} else {
 			this.state.tokenType = TokenLiteral
@@ -481,5 +603,9 @@ func (this *message) reset() {
 	this.state.start = 0
 	this.state.end = len(this.data)
 	this.state.cur = 0
-	this.data = strings.ToLower(this.data)
+	//this.data = strings.ToLower(this.data)
+}
+
+func (this *message) insideQuote() bool {
+	return this.state.single || this.state.double || this.state.angle || this.state.square
 }

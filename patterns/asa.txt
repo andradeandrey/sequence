@@ -1,0 +1,44 @@
+%createtime% %appipv4% %string% : resource ' ssh ' limit of %integer% reached for context ' single_vf '
+%createtime% %appipv4% %string% : %integer% in use , %integer% most used
+%createtime% %appipv4% %string% : %protocol% access %action% by acl from %srcipv4% / %srcport% to %outiface% : %dstipv4% / %dstport%
+%createtime% %appipv4% %string% : ip = %srcipv4% , error processing payload : payload id : %integer%
+%createtime% %appipv4% %string% : connection attempt was %action% by " no forward " command : %protocol% src %iniface% : %srchost% dst %outiface% : %dstipv4% ( type %integer% , code %integer% )
+%createtime% %appipv4% %string% : %string% %protocol% connection %action% from %srcipv4% / %srcport% to %dstipv4% / %dstport% flags %reason% on interface %iniface%
+%createtime% %appipv4% %string% : user priv level changed : uname : %srcuser% from : %integer% to : %integer%
+%createtime% %appipv4% %string% : %string% %protocol% connection %action% from %srcipv4% / %srcport% to %dstipv4% / %dstport% flags %string% ack on interface %iniface%
+%createtime% %appipv4% %string% : %action% inbound %protocol% from %srcipv4% / %srcport% to %dstipv4% / %dstport% on interface %iniface%
+%createtime% %appipv4% %string% : %status% transport field for protocol = %protocol% , from %srcipv4% / %srcport% to %dstipv4% / %dstport%
+%createtime% %appipv4% %string% : denied icmp type = %integer% , from laddr %srcipv4% on interface %iniface% to %dstipv4% : no matching session
+%createtime% %appipv4% %string% : error : duplex-mismatch on et0/0 resulted in transmitter lockup. a soft reset of the switch was performed.
+%createtime% %appipv4% %string% : call-home inventory message to %url% %status% reason : %reason%
+%createtime% %appipv4% %string% : %action% %protocol% connection %sessionid% for %iniface% : %srcipv4% / %srcport% to %outiface% : %dstipv4% / %dstport% duration %integer% : %integer% : %integer% bytes %bytessent%
+%createtime% %appipv4% %string% : %action% %protocol% src %iniface% : %srcipv4% / %srcport% dst %outiface% : %dstipv4% / %dstport% by access-group " outside_in " [ 0x0 , 0x0 ]
+%createtime% %appipv4% %string% : [ scanning ] drop %string% exceeded. current burst rate is %integer% per second , max configured rate is %integer% ; current average rate is %integer% per second , max configured rate is %integer% ; cumulative total count is %integer%
+%createtime% %appipv4% %string% : %action% ip spoof from ( %srcipv4% ) to %dstipv4% on interface %iniface%
+%createtime% %appipv4% %string% : begin configuration : %srcipv4% writing to memory
+%createtime% %appipv4% %string% : connection attempt was %action% by " no forward " command : %protocol% src %iniface% : %srchost% dst %outiface% : %dstipv4% / %dstport%
+%createtime% %appipv4% %string% : begin configuration : %srcipv4% reading from terminal
+%createtime% %appipv4% %string% : %action% %string% %protocol% connection %sessionid% for %iniface% : %srcipv4% / %srcport% ( %srcipv4nat% / %srcportnat% ) to %outiface% : %dstipv4% / %dstport% ( %dstipv4nat% / %dstportnat% )
+%createtime% %appipv4% %string% : %string% %string% syn from %iniface% : %srcipv4% / %srcport% to %outiface% : %dstipv4% / %dstport% with different initial sequence number
+%createtime% %appipv4% %string% : %action% %status% to locate next hop for %protocol% from %iniface% : %srcipv4% / %srcport% to %outiface% : %dstipv4% / %dstport%
+%createtime% %appipv4% %string% : no matching connection for icmp error message : icmp src %iniface% : %srcipv4% dst %outiface% : %dstipv4% ( type %integer% , code %integer% ) on %string% interface. original ip payload : %string% src %ipv4% / %integer% dst %ipv4% / %float%
+%createtime% %appipv4% %string% : no matching connection for icmp error message : icmp src %iniface% : %srcipv4% dst %outiface% : %dstipv4% ( type %integer% , code %integer% ) on %string% interface. original ip payload : %string% src %ipv4% dst %ipv4% ( type %integer% , code %integer% ) .
+%createtime% %appipv4% %string% : received arp response collision from %ipv4% / %string% on interface %string% with existing arp entry %ipv4% / %string%
+%createtime% %appipv4% %string% : %action% %protocol% connection %sessionid% for %iniface% : %srcipv4% / %srcport% to %outiface% : %dstipv4% / %dstport% duration %integer% : %integer% : %integer% bytes %bytessent% %reason% %reason%
+%createtime% %appipv4% %string% : denied icmp type = %integer% , code = %integer% from %srcipv4% on interface %iniface%
+%createtime% %appipv4% %string% : %srcipv4% end configuration : ok
+%createtime% %appipv4% %string% : ip = %srcipv4% , header invalid , missing sa payload ! ( next payload = %integer% )
+%createtime% %appipv4% %string% : connection attempt was %action% by " no forward " command : %protocol% src %iniface% : %srcipv4% dst %outiface% : %dstipv4% ( type %integer% , code %integer% )
+%createtime% %appipv4% %string% : regular translation creation %status% for protocol %integer% src %iniface% : %srcipv4% dst %outiface% : %dstipv4%
+%createtime% %appipv4% %string% : user ' %srcuser% ' executed the ' %string% ' command.
+%createtime% %appipv4% %string% : %action% %protocol% connection %sessionid% for %iniface% : %srcipv4% / %srcport% to %outiface% : %dstipv4% / %dstport% duration %integer% : %integer% : %integer% bytes %bytessent% %reason% %reason% %reason%
+%createtime% %appipv4% %string% : line protocol on interface %string% , changed state to %string%
+%createtime% %appipv4% %string% : user logged out : uname : %srcuser%
+%createtime% %appipv4% %string% : udp flow from %iniface% : %srcipv4% / %srcport% to %outiface% : %dstipv4% / %dstport% terminated by inspection engine , reason - inspector disconnected , dropped packet.
+%createtime% %appipv4% %string% : no matching connection for icmp error message : icmp src %iniface% : %srcipv4% dst %outiface% : %dstipv4% ( type %integer% , code %integer% ) on %string% interface. original ip payload : < unknown > .
+%createtime% %appipv4% %string% : phase %integer% failure : mismatched attribute types for class group description : rcv'd : group %integer% cfg'd : group %integer%
+%createtime% %appipv4% %string% : connection attempt was %action% by " no forward " command : %protocol% src %iniface% : %srcipv4% / %srcport% dst %outiface% : %dstipv4% / %dstport%
+%createtime% %appipv4% %string% : to ensure smart call home can properly communicate with cisco , use the command " dns name-server " to configure at least one dns server.
+%createtime% %appipv4% %string% : %string% %protocol% connection %action% from %srcipv4% / %srcport% to %dstipv4% / %dstport% flags %string% psh ack on interface %iniface%
+%createtime% %appipv4% %string% : %action% %protocol% ( no connection ) from %srcipv4% / %srcport% to %dstipv4% / %dstport% flags %reason% %reason% on interface %iniface%
+%createtime% %appipv4% %string% : %action% %protocol% ( no connection ) from %srcipv4% / %srcport% to %dstipv4% / %dstport% flags %reason% on interface %iniface%

@@ -20,6 +20,10 @@ import (
 	"unicode"
 )
 
+// Parser is a tree-based parsing engine for log messages. It builds a parsing tree
+// based on pattern sequence supplied, and for each message sequence, returns the
+// matching pattern sequence. Each of the message tokens will be marked with the
+// semantic field types.
 type Parser struct {
 	root   *parseNode
 	height int
@@ -61,6 +65,8 @@ func (this *parseNode) String() string {
 	return fmt.Sprintf("leaf=%t, node=%s, children=%d", this.leaf, this.Token.String(), len(this.children))
 }
 
+// Add will add a single pattern sequence to the parser tree. This effectively
+// builds the parser tree so it can be used for parsing later.
 func (this *Parser) Add(seq Sequence) error {
 	this.mu.Lock()
 	defer this.mu.Unlock()
@@ -101,6 +107,8 @@ func (this *Parser) Add(seq Sequence) error {
 	return nil
 }
 
+// Parse will take the message sequence supplied and go through the parser tree to
+// find the matching pattern sequence. If found, the pattern sequence is returned.
 func (this *Parser) Parse(seq Sequence) (Sequence, error) {
 	this.mu.RLock()
 	defer this.mu.RUnlock()

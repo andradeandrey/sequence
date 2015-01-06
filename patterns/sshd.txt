@@ -1,0 +1,35 @@
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% ( sshd : %string% ) : error retrieving information about user %dstuser%
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% ( sshd : %string% ) : error retrieving information about user %string% ,
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% : too many %string% failures for %dstuser%
+%createtime% %apphost% %appname% [ %sessionid% ] : invalid user %dstuser% from %ipv4%
+%createtime% %apphost% %appname% [ %sessionid% ] : received disconnect from %srcipv4% : %integer% : bye bye
+%createtime% %apphost% %appname% [ %sessionid% ] : address %srcipv4% maps to %srchost% , but this does not map back to the address - possible break-in attempt !
+%createtime% %apphost% %appname% [ %sessionid% ] : failed password for invalid user %dstuser% , from %srcipv4% port %srcport% ssh2
+%createtime% %apphost% %appname% [ %sessionid% ] : received disconnect from unknown : %integer% : com.jcraft.jsch.jschexception : reject hostkey : %srcipv4%
+%createtime% %apphost% %appname% [ %sessionid% ] : failed password for %dstuser% from %srcipv4% port %srcport% ssh2
+%createtime% %apphost% %appname% [ %sessionid% ] : %method% %integer% more authentication %status% ; logname = %string% = %integer% euid = %integer% tty = %string% ruser = rhost = %srcipv4% user = %dstuser%
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% ( sshd : %string% ) : authentication %status% ; logname = %string% = %integer% euid = %integer% tty = %string% ruser = rhost = %srcipv4% user = %dstuser%
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% : write failed : connection reset by peer
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% ( sshd : %string% ) : check pass ; user %string%
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% ( sshd : %string% ) : authentication %status% ; logname = %string% = %integer% euid = %integer% tty = %string% ruser = rhost = %srchost%
+%createtime% %apphost% %appname% [ %sessionid% ] : failed password for invalid user %dstuser% from %srcipv4% port %srcport% ssh2
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% ( sshd : %string% ) : authentication %status% ; logname = %string% = %integer% euid = %integer% tty = %string% ruser = rhost = %srcipv4%
+%createtime% %apphost% %appname% [ %sessionid% ] : did not receive identification string from %srcuser%
+%createtime% %apphost% %appname% [ %sessionid% ] : invalid public dh value ( 1/2048 )
+%createtime% %apphost% %appname% [ %sessionid% ] : received %action% from %srcipv4% : %integer% : disconnected by user
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% : read from socket %string% : connection reset by peer
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% : invalid user %string% ,
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% ( sshd : %string% ) : authentication %status% ; logname = %string% = %integer% euid = %integer% tty = %string% ruser = rhost = %srchost% user = %dstuser%
+%createtime% %apphost% %appname% [ %sessionid% ] : %method% service ( sshd ) ignoring max retries ; %integer% > %integer%
+%createtime% %apphost% %appname% [ %sessionid% ] : did not receive identification string from %srcipv4%
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% ( sshd : %string% ) : %object% %action% for user %dstuser%
+%createtime% %apphost% %appname% [ %sessionid% ] : connection closed by %srcipv4%
+%createtime% %apphost% %appname% [ %sessionid% ] : reverse mapping checking getaddrinfo for %srchost% %status% - possible break-in attempt !
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% : %string% client %string% dh value
+%createtime% %apphost% %appname% [ %sessionid% ] : %status% %method% for %dstuser% from %srcipv4% port %srcport% ssh2
+%createtime% %apphost% %appname% [ %sessionid% ] : %method% %integer% more authentication %status% ; logname = %string% = %integer% euid = %integer% tty = %string% ruser = rhost = %srchost% user = %dstuser%
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% ( sshd : %string% ) : error retrieving information about user a
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% ( sshd : %string% ) : bad username [ = %dstuser% ]
+%createtime% %apphost% %appname% [ %sessionid% ] : invalid user %dstuser% , from %srcipv4%
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% ( sshd : %string% ) : %object% %action% for user %dstuser% by ( uid = %integer% )
+%createtime% %apphost% %appname% [ %sessionid% ] : %string% : invalid user %dstuser%

@@ -16,6 +16,7 @@ package sequence
 
 import "bytes"
 
+// TimeFormats is a list of commonly seen time formats from log messages
 var TimeFormats []string = []string{
 	"Mon Jan _2 15:04:05 2006",
 	"Mon Jan _2 15:04:05 MST 2006",
@@ -114,7 +115,7 @@ func buildTimeFSM() *timeNode {
 			parent = child
 		}
 
-		parent.final = TokenTS
+		parent.final = TokenTime
 		parent.subtype = i
 	}
 
