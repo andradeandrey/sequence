@@ -1,6 +1,8 @@
 sequence
 ========
 
+[![GoDoc](http://godoc.org/github.com/surge/sequence?status.svg)](http://godoc.org/github.com/surge/sequence)
+
 `sequence` is a _high performance sequential semantic log message analyzer and parser_.
 
 * It is _sequential_ because it goes through a log message sequentially and does not use regular expressions. 
@@ -49,6 +51,10 @@ Performance can be improved by adding more cores:
   $ GOMAXPROCS=2 ./sequence bench -p ../../patterns/asa.txt -i ../../data/allasa.log -w 2
   Parsed 234815 messages in 2.51 secs, ~ 93614.09 msgs/sec
 ```
+
+### Documentation
+
+Documentation is available at godoc: [package](http://godoc.org/github.com/surge/sequence), [command](http://godoc.org/github.com/surge/sequence/cmd/sequence).
 
 ### License
 
